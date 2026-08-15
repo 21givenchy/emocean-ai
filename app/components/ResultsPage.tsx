@@ -1,196 +1,217 @@
 "use client";
 
 import React, { useState } from 'react';
-import { AssessmentResults, generateWallpaperCSS, exportResults, ColorTheme } from '@/app/lib/colorThemes';
+import { VisualMode, VisualTokens, modeMeta } from '@/app/lib/designTokens';
 
 interface ResultsPageProps {
-  results: AssessmentResults;
+  mode: VisualMode;
+  name: string;
+  tokens: VisualTokens;
+  onSave: () => void;
+  onMyModes: () => void;
 }
 
-type ExportFormat = 'hex' | 'oklch' | 'css' | 'json';
+const sampleConversation = [
+  { sender: 'other', text: 'Hey! How are you doing today?' },
+  { sender: 'me', text: 'Pretty good, just finishing up some work.' },
+  { sender: 'other', text: 'Nice! Want to grab coffee later?' },
+  { sender: 'me', text: 'Sounds great, let me know when you\'re free.' },
+];
 
-export const ResultsPage: React.FC<ResultsPageProps> = ({ results }) => {
-  const [activeTab, setActiveTab] = useState<'calm' | 'energizing' | 'uncertain'>('calm');
-  const [exportFormat, setExportFormat] = useState<ExportFormat>('hex');
+export const ResultsPage: React.FC<ResultsPageProps> = ({
+  mode,
+  name,
+  tokens,
+  onSave,
+  onMyModes,
+}) => {
   const [copied, setCopied] = useState(false);
+  const meta = modeMeta[mode];
 
-  const wallpaperCSS = generateWallpaperCSS(results.calmPalette);
-  const exportData = exportResults(results, exportFormat);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(exportData);
+  const handleCopyPalette = () => {
+    const palette = `Background: ${tokens.color.canvas}\nSurface: ${tokens.color.surface}\nText: ${tokens.color.textPrimary}\nAccent: ${tokens.color.accent}`;
+    navigator.clipboard.writeText(palette);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([exportData], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `color-palette-${exportFormat}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleCopyCSS = () => {
+    const css = `:root {
+  --canvas: ${tokens.color.canvas};
+  --surface: ${tokens.color.surface};
+  --text-primary: ${tokens.color.textPrimary};
+  --text-secondary: ${tokens.color.textSecondary};
+  --accent: ${tokens.color.accent};
+  --border: ${tokens.color.border};
+}`;
+    navigator.clipboard.writeText(css);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const ColorSwatch = ({ theme }: { theme: ColorTheme }) => (
-    <div className="group relative">
-      <div
-        className="w-full h-24 rounded-xl shadow-inner transition-transform group-hover:scale-105"
-        style={{ backgroundColor: theme.hex }}
-      />
-      <div className="mt-2">
-        <p className="font-medium text-gray-800">{theme.name}</p>
-        <p className="text-xs text-gray-500">{theme.hex}</p>
-        <p className="text-xs text-gray-400">{theme.oklch}</p>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold text-gray-800">Your Color Palette Results</h1>
-        <p className="text-gray-600 max-w-lg mx-auto">
-          Based on your responses, we've identified colors that tend to help you feel calm
-          and colors that tend to energize you.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <nav className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
+        <button
+          onClick={onMyModes}
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          My modes
+        </button>
+        <span className="text-sm text-gray-500">Your visual profile</span>
+      </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-6">
-          <h3 className="font-semibold text-green-800 mb-2">Calm Palette</h3>
-          <p className="text-3xl font-bold text-green-600">{results.calmPalette.length}</p>
-          <p className="text-sm text-green-600">colors identified</p>
+      <main className="max-w-4xl mx-auto px-6 py-12">
+        <div className="text-center mb-12">
+          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
+            Your {meta.label} mode is ready
+          </p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">{name}</h1>
+          <p className="text-lg text-gray-600">{meta.description}</p>
         </div>
-        <div className="rounded-2xl border border-orange-200 bg-orange-50 p-6">
-          <h3 className="font-semibold text-orange-800 mb-2">Energizing Palette</h3>
-          <p className="text-3xl font-bold text-orange-600">{results.energizingPalette.length}</p>
-          <p className="text-sm text-orange-600">colors identified</p>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
-          <h3 className="font-semibold text-gray-800 mb-2">Confidence</h3>
-          <p className="text-3xl font-bold text-gray-600">{Math.round(results.confidence * 100)}%</p>
-          <p className="text-sm text-gray-600">signal quality</p>
-        </div>
-      </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={() => setActiveTab('calm')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'calm'
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Calm Colors
-          </button>
-          <button
-            onClick={() => setActiveTab('energizing')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'energizing'
-                ? 'bg-orange-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Energizing Colors
-          </button>
-          {results.uncertainColors.length > 0 && (
-            <button
-              onClick={() => setActiveTab('uncertain')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeTab === 'uncertain'
-                  ? 'bg-gray-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          <div className="rounded-2xl overflow-hidden shadow-xl border border-gray-200">
+            <div
+              className="px-4 py-3 border-b flex items-center gap-3"
+              style={{
+                backgroundColor: tokens.color.surface,
+                borderColor: tokens.color.border,
+              }}
             >
-              Uncertain
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {activeTab === 'calm' &&
-            results.calmPalette.map((theme) => <ColorSwatch key={theme.id} theme={theme} />)}
-          {activeTab === 'energizing' &&
-            results.energizingPalette.map((theme) => <ColorSwatch key={theme.id} theme={theme} />)}
-          {activeTab === 'uncertain' &&
-            results.uncertainColors.map((theme) => <ColorSwatch key={theme.id} theme={theme} />)}
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="font-semibold text-gray-800 mb-4">Wallpaper Preview</h3>
-        <div
-          className="w-full h-48 rounded-xl"
-          style={{ background: wallpaperCSS }}
-        />
-      </div>
-
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="font-semibold text-gray-800 mb-4">Export Your Palette</h3>
-
-        <div className="flex flex-wrap gap-2 mb-4">
-          {(['hex', 'oklch', 'css', 'json'] as ExportFormat[]).map((format) => (
-            <button
-              key={format}
-              onClick={() => setExportFormat(format)}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                exportFormat === format
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {format.toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        <pre className="p-4 rounded-lg bg-gray-50 text-sm text-gray-800 overflow-x-auto font-mono">
-          {exportData}
-        </pre>
-
-        <div className="flex gap-3 mt-4">
-          <button
-            onClick={handleCopy}
-            className="flex-1 rounded-lg bg-blue-500 px-4 py-2 text-white font-medium hover:bg-blue-600 transition-colors"
-          >
-            {copied ? 'Copied!' : 'Copy to Clipboard'}
-          </button>
-          <button
-            onClick={handleDownload}
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-          >
-            Download File
-          </button>
-        </div>
-      </div>
-
-      {results.skinToneGroup && (
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="font-semibold text-gray-800 mb-4">Skin-tone & Lighting Analysis</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 rounded-lg bg-gray-50">
-              <p className="text-sm text-gray-500">Skin-tone Group</p>
-              <p className="font-medium text-gray-800 capitalize">{results.skinToneGroup}</p>
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
+                style={{ backgroundColor: tokens.color.accent, color: tokens.color.accentText }}
+              >
+                A
+              </div>
+              <div style={{ color: tokens.color.textPrimary }}>
+                <p className="font-medium text-sm">Amina</p>
+                <p className="text-xs" style={{ color: tokens.color.textSecondary }}>Active now</p>
+              </div>
             </div>
-            <div className="p-4 rounded-lg bg-gray-50">
-              <p className="text-sm text-gray-500">Lighting Condition</p>
-              <p className="font-medium text-gray-800 capitalize">{results.lightingCondition}</p>
+
+            <div
+              className="p-4 space-y-3"
+              style={{ backgroundColor: tokens.color.canvas, minHeight: '280px' }}
+            >
+              {sampleConversation.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className="max-w-[75%] px-4 py-2 text-sm"
+                    style={{
+                      backgroundColor: msg.sender === 'me'
+                        ? tokens.color.outgoingBubble
+                        : tokens.color.incomingBubble,
+                      color: msg.sender === 'me'
+                        ? tokens.color.outgoingBubbleText
+                        : tokens.color.incomingBubbleText,
+                      borderRadius: '1rem',
+                    }}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div
+              className="px-4 py-3 border-t"
+              style={{
+                backgroundColor: tokens.color.surface,
+                borderColor: tokens.color.border,
+              }}
+            >
+              <div
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm"
+                style={{
+                  backgroundColor: tokens.color.surfaceRaised,
+                  color: tokens.color.textSecondary,
+                }}
+              >
+                Write a message...
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="rounded-2xl p-6 border border-gray-200 bg-white">
+              <h3 className="font-semibold text-gray-800 mb-4">Your palette</h3>
+              <div className="space-y-3">
+                {[
+                  { label: 'Background', color: tokens.color.canvas },
+                  { label: 'Surface', color: tokens.color.surface },
+                  { label: 'Text', color: tokens.color.textPrimary },
+                  { label: 'Accent', color: tokens.color.accent },
+                ].map(({ label, color }) => (
+                  <div key={label} className="flex items-center gap-3">
+                    <div
+                      className="w-8 h-8 rounded-lg border border-gray-200"
+                      style={{ backgroundColor: color }}
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">{label}</p>
+                      <p className="text-xs text-gray-500 font-mono">{color}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl p-6 border border-gray-200 bg-white">
+              <h3 className="font-semibold text-gray-800 mb-4">Match confidence</h3>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-green-500 rounded-full" style={{ width: '78%' }} />
+                </div>
+                <span className="text-sm font-medium text-green-600">Clear</span>
+              </div>
+              <p className="text-sm text-gray-600">
+                This palette consistently ranked above the alternatives you saw.
+              </p>
             </div>
           </div>
         </div>
-      )}
 
-      <div className="text-center text-sm text-gray-500 pb-8">
-        <p>Results generated locally. No data was uploaded.</p>
-        <p className="mt-1">
-          These colors are based on your self-reported responses and should be interpreted
-          as suggestions, not medical recommendations.
-        </p>
-      </div>
+        <div className="flex flex-wrap gap-4 justify-center mb-12">
+          <button
+            onClick={onSave}
+            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Save mode
+          </button>
+          <button
+            onClick={handleCopyPalette}
+            className="flex items-center gap-2 border border-gray-300 px-6 py-3 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            {copied ? 'Copied!' : 'Copy palette'}
+          </button>
+          <button
+            onClick={handleCopyCSS}
+            className="flex items-center gap-2 border border-gray-300 px-6 py-3 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            View CSS
+          </button>
+        </div>
+
+        <div className="text-center">
+          <button
+            onClick={onMyModes}
+            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            Go to My Modes →
+          </button>
+        </div>
+      </main>
     </div>
   );
 };

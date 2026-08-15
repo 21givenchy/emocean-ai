@@ -277,29 +277,33 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({ onEmotionChange, onVital
       return;
     }
 
-    const result = landmarker.detectForVideo(video, performance.now());
-    const found = result.faceLandmarks.length > 0;
-    setFaceFound(found);
+    try {
+      const result = landmarker.detectForVideo(video, performance.now());
+      const found = result.faceLandmarks.length > 0;
+      setFaceFound(found);
 
-    if (found) {
-      const blend = result.faceBlendshapes?.[0]?.categories ?? [];
-      const { scores, dominant, confidence: readConfidence } = readExpressions(blend);
-      setExpressionScores(scores);
-      setMood(dominant);
-      setConfidence(Math.round(readConfidence * 100));
+      if (found) {
+        const blend = result.faceBlendshapes?.[0]?.categories ?? [];
+        const { scores, dominant, confidence: readConfidence } = readExpressions(blend);
+        setExpressionScores(scores);
+        setMood(dominant);
+        setConfidence(Math.round(readConfidence * 100));
 
-      if (onEmotionChangeRef.current) {
-        onEmotionChangeRef.current({ label: dominant, confidence: readConfidence });
-      }
+        if (onEmotionChangeRef.current) {
+          onEmotionChangeRef.current({ label: dominant, confidence: readConfidence });
+        }
 
-      const color = extractForeheadColor(video);
-      if (color) {
-        heartRateRef.current.addSample(color.r, color.g, color.b);
-        const vitals = heartRateRef.current.getVitalSigns();
-        if (onVitalSignsChangeRef.current) {
-          onVitalSignsChangeRef.current(vitals);
+        const color = extractForeheadColor(video);
+        if (color) {
+          heartRateRef.current.addSample(color.r, color.g, color.b);
+          const vitals = heartRateRef.current.getVitalSigns();
+          if (onVitalSignsChangeRef.current) {
+            onVitalSignsChangeRef.current(vitals);
+          }
         }
       }
+    } catch {
+      // Silently ignore detection errors
     }
 
     rafRef.current = requestAnimationFrame(detect);
@@ -442,13 +446,13 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({ onEmotionChange, onVital
           const item = expressionMeta[key];
           const value = expressionScores[key] ?? 0;
           return (
-            <div key={key} className="rounded-2xl border border-[#20334a]/10 bg-[#fffdf8]/65 p-4">
+            <div key={key} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <span className={`size-3 rounded-full ${item.color}`} />
-                <span className="font-mono text-xs text-[#20334a]/50">{value.toFixed(2)}</span>
+                <span className="font-mono text-xs font-semibold text-gray-700">{value.toFixed(2)}</span>
               </div>
-              <p className="text-sm font-medium">{item.label}</p>
-              <div className="mt-3 h-1 overflow-hidden rounded-full bg-[#20334a]/10">
+              <p className="text-sm font-medium text-gray-800">{item.label}</p>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
                 <div
                   className={`h-full rounded-full ${item.color}`}
                   style={{ width: `${Math.min(100, value * 100)}%` }}
@@ -459,8 +463,8 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({ onEmotionChange, onVital
         })}
       </div>
 
-      <p className="max-w-md text-xs leading-5 text-[#20334a]/50">
-        These are observed facial-expression signals, not a diagnosis of how you feel inside. Heart rate is estimated using photoplethysmography (PPG) from facial color changes.
+      <p className="max-w-md text-xs leading-5 text-gray-500">
+        Observed facial signals, not a diagnosis. Camera data stays on your device.
       </p>
     </div>
   );
