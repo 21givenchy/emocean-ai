@@ -9,11 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@mediapipe/tasks-vision": "^1.0.1",
+    "@litertjs/core": "0.2.1",
+    "@mediapipe/tasks-vision": "0.10.21",
     "face-api.js": "^0.22.2",
     "next": "16.3.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "vitalcamera-sdk": "0.6.9"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
