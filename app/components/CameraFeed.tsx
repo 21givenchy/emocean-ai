@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useSensorHub } from '@/app/hooks/useSensorHub';
-import type { VitalSignsData } from './VitalSigns';
+import { VitalSigns, vitalSignsDataFromSnapshot, type VitalSignsData } from './VitalSigns';
 
 type ExpressionKey = 'joy' | 'calm' | 'focus' | 'surprise' | 'tense' | 'curious' | 'drowsy' | 'talking' | 'sad' | 'angry' | 'frustrated';
 
@@ -73,6 +73,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({ onEmotionChange, onVital
   const expressionScores = mapExpressionScores(snapshot?.facialExpression.value?.scores);
   const mood = pickDominant(expressionScores, snapshot?.facialExpression.value?.label);
   const confidence = Math.round(Math.min(98, 55 + Math.max(0, expressionScores[mood]) * 40));
+  const vitalSigns = snapshot ? vitalSignsDataFromSnapshot(snapshot) : null;
 
   useEffect(() => {
     if (!snapshot?.facialExpression.available || !snapshot.facialExpression.value) return;
@@ -205,6 +206,10 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({ onEmotionChange, onVital
           );
         })}
       </div>
+
+      {vitalSigns && (
+        <VitalSigns vitalSigns={vitalSigns} isLive={running && !paused} />
+      )}
 
       <p className="max-w-md text-xs leading-5 text-gray-500">
         Observed facial signals, not a diagnosis. Camera data stays on your device.
