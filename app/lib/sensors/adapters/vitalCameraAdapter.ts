@@ -35,7 +35,7 @@ export function createVitalCameraAdapter(): SensorAdapter {
 
   async function init(ctx: AdapterContext): Promise<Capability[]> {
     ctxRef = ctx;
-    const { BrowserAdapter } = await import('vitalcamera-sdk/adapter').then(
+    const { BrowserAdapter } = await import('@/app/lib/sensors/vendor/vitalcamera-sdk/adapter/browser.js').then(
       (m) => ({ BrowserAdapter: (m as any).default ?? m })
     );
 

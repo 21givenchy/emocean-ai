@@ -708,7 +708,8 @@ export default class BrowserAdapter {
      */
     async _loadBlazeFace() {
         const mediapipeBase = this._runtimeBaseUrls.mediapipe;
-        const { FaceDetector, FilesetResolver } = await import(mediapipeBase + '+esm');
+        const _dynamicImport = new Function('s', 'return import(s)');
+        const { FaceDetector, FilesetResolver } = await _dynamicImport(mediapipeBase + '+esm');
         const vision = await FilesetResolver.forVisionTasks(mediapipeBase + 'wasm');
 
         // Allow callers to provide the model as a buffer; otherwise fetch by URL.

@@ -24,8 +24,8 @@ const WORKER_FILES = {
     face_landmarker:  'face_landmarker.worker.js',
 };
 
-/** Derive the workers directory from this module's own URL. */
-const WORKERS_DIR = new URL('./', import.meta.url).href;
+/** Workers directory — hardcoded for Turbopack compatibility (import.meta.url not supported). */
+const WORKERS_DIR = '/vendor/vitalcamera-sdk-0.6.9/workers/';
 
 /** Cache fetched worker source code to avoid redundant network requests. */
 const _sourceCache = new Map();
