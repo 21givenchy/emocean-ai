@@ -19,6 +19,7 @@ export default function HomePage() {
           <Link href="/lab" className="hover:text-white transition-colors">Lab</Link>
           <Link href="/research" className="hover:text-white transition-colors">Research</Link>
           <Link href="/for-teams" className="hover:text-white transition-colors">For teams</Link>
+          <Link href="/sandbox" className="hover:text-white transition-colors">Developers</Link>
           <Link href="/about" className="hover:text-white transition-colors">About</Link>
         </div>
         <Link
@@ -152,6 +153,9 @@ export default function HomePage() {
           <div className="flex gap-6">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="/research" className="hover:text-white transition-colors">Research</Link>
+            <Link href="/methods" className="hover:text-white transition-colors">Methods</Link>
+            <Link href="/validation" className="hover:text-white transition-colors">Validation</Link>
+            <Link href="/sandbox" className="hover:text-white transition-colors">Developers</Link>
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
           </div>
         </div>
