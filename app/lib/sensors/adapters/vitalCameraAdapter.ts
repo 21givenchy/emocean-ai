@@ -44,6 +44,12 @@ export function createVitalCameraAdapter(): SensorAdapter {
       litert: '/vendor/litertjs-core-0.2.1/',
       mediapipe: '/vendor/mediapipe-tasks-vision-0.10.21/',
     };
+    // Explicit workerBasePath — without this the SDK falls back to fetching
+    // worker source relative to its own bundled module URL (import.meta.url),
+    // which under Next.js/Turbopack points at a build chunk, not a real
+    // static path. Self-hosted worker sources live here (see
+    // scripts/copy-sensor-assets.mjs).
+    const workerBasePath = '/vendor/vitalcamera-sdk-0.6.9/workers/';
 
     let models: Record<string, ArrayBuffer>;
     let faceLandmarkerEnabled = true;
@@ -69,6 +75,7 @@ export function createVitalCameraAdapter(): SensorAdapter {
     browserAdapter = new BrowserAdapter({
       models,
       runtimeBaseUrls,
+      workerBasePath,
       vitalcameraConfig: {
         enableFaceLandmarker: faceLandmarkerEnabled,
         enableEyeState: faceLandmarkerEnabled,
