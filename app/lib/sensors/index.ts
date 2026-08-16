@@ -4,6 +4,7 @@ import { createVitalCameraAdapter } from './adapters/vitalCameraAdapter';
 import { createMediapipeFallbackAdapter } from './adapters/mediapipeFallbackAdapter';
 import { createGreenChannelRppgAdapter } from './adapters/greenChannelRppgAdapter';
 import { createRespirationAdapter } from './adapters/respirationAdapter';
+import { createChestMotionRespirationAdapter } from './adapters/chestMotionRespirationAdapter';
 import { createMovementStabilityAdapter } from './adapters/movementStabilityAdapter';
 import { createSimulationAdapter, isSimulationAllowed } from './adapters/simulationAdapter';
 
@@ -24,7 +25,7 @@ const REAL_REGISTRY: AdapterRegistry = {
   eyeState: ['vitalcamera-sdk', 'mediapipe-fallback'],
   gaze: ['vitalcamera-sdk'], // no fallback gaze source
   speaking: ['vitalcamera-sdk', 'mediapipe-fallback'],
-  respiration: ['respiration-derived'],
+  respiration: ['chest-motion-respiration', 'respiration-derived'],
   movementStability: ['movement-stability-derived'],
 };
 
@@ -67,6 +68,7 @@ export function createDefaultSensorHub(options: CreateSensorHubOptions): SensorH
         createMediapipeFallbackAdapter(),
         createGreenChannelRppgAdapter(),
         createRespirationAdapter(),
+        createChestMotionRespirationAdapter(),
         createMovementStabilityAdapter(),
       ];
 
