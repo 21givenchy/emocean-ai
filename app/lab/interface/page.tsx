@@ -17,8 +17,8 @@ export default function InterfacePage() {
         <span className="text-sm" style={{ color: '#A9BAB8' }}>Find My Interface</span>
       </nav>
       <IntentSelect
-        onSelect={(mode) => {
-          window.location.href = `/lab/interface/session?mode=${mode}`;
+        onSelect={(mode, assessmentMode) => {
+          window.location.href = `/lab/interface/session?mode=${mode}&depth=${assessmentMode}`;
         }}
         onBack={() => window.location.href = '/lab'}
       />

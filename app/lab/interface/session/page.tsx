@@ -3,24 +3,31 @@
 import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { VisualMode } from '@/app/lib/designTokens';
+import { AssessmentMode } from '@/app/lib/assessment/engine';
 import { AssessmentFlow } from '@/app/components/AssessmentFlow';
 
 function SessionContent() {
   const searchParams = useSearchParams();
   const mode = (searchParams.get('mode') || 'focus') as VisualMode;
+  const assessmentMode = (searchParams.get('depth') || 'quick') as AssessmentMode;
   const [sessionId] = useState(() => Date.now().toString());
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#071318', color: '#F5F7F2' }}>
-      <AssessmentFlow
-        mode={mode}
-        onComplete={(profile) => {
-          sessionStorage.setItem(`emocean-session-${sessionId}`, JSON.stringify(profile));
-          window.location.href = `/lab/interface/results/${sessionId}`;
-        }}
-        onBack={() => window.location.href = '/lab/interface'}
-      />
-    </div>
+    <AssessmentFlow
+      mode={mode}
+      assessmentMode={assessmentMode}
+      onComplete={(result) => {
+        sessionStorage.setItem(
+          `emocean-session-${sessionId}`,
+          JSON.stringify({
+            ...result,
+            sessionId,
+          })
+        );
+        window.location.href = `/lab/interface/results/${sessionId}`;
+      }}
+      onBack={() => window.location.href = '/lab/interface'}
+    />
   );
 }
 
