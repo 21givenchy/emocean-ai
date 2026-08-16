@@ -166,14 +166,8 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
 
             <div className="rounded-2xl p-6 border border-gray-200 bg-white">
               <h3 className="font-semibold text-gray-800 mb-4">Match confidence</h3>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500 rounded-full" style={{ width: '78%' }} />
-                </div>
-                <span className="text-sm font-medium text-green-600">Clear</span>
-              </div>
-              <p className="text-sm text-gray-600">
-                This palette consistently ranked above the alternatives you saw.
+              <p className="text-sm text-gray-500 italic">
+                Complete the full assessment to see your match confidence based on repeated within-person evidence.
               </p>
             </div>
           </div>

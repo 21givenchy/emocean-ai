@@ -103,8 +103,25 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ mode, onComplete
   }, [currentIndex, candidates, ratings, mode, onComplete]);
 
   const handleSkip = useCallback(() => {
-    handleRate(3);
-  }, [handleRate]);
+    setRatings((prev) => ({ ...prev, [current.id]: -1 }));
+    setShowPrompt(false);
+
+    setTimeout(() => {
+      if (currentIndex < candidates.length - 1) {
+        setCurrentIndex((prev) => prev + 1);
+      } else {
+        const rated = candidates.filter((c) => ratings[c.id] !== undefined && ratings[c.id] !== -1);
+        const bestCandidate = rated.length > 0
+          ? rated.reduce((best, c) => (ratings[c.id] > (ratings[best.id] || 0) ? c : best), rated[0])
+          : candidates[0];
+        onComplete({
+          mode,
+          name: bestCandidate.name,
+          tokens: bestCandidate.tokens,
+        });
+      }
+    }, 300);
+  }, [currentIndex, candidates, ratings, mode, onComplete, current.id]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">

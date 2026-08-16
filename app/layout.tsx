@@ -1,8 +1,11 @@
+import { Inter } from 'next/font/google';
 import "./globals.css";
 
+const inter = Inter({ subsets: ['latin'] });
+
 export const metadata = {
-  title: "Emotion Detection Camera",
-  description: "Real-time facial emotion detection using webcam",
+  title: "EMOCEAN — Bioadaptive Experience Lab",
+  description: "A public, evidence-aware place to discover interface settings that support your work and experience a breathing-responsive world",
 };
 
 export default function RootLayout({
@@ -12,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-full bg-black text-white">{children}</body>
+      <body className={`${inter.className} min-h-full bg-black text-white`}>{children}</body>
     </html>
   );
 }

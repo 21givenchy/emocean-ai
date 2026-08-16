@@ -9,7 +9,6 @@ export interface VitalSignsData {
   sdnn: number | null;
   rmssd: number | null;
   breathRate: number | null;
-  spo2: number | null;
   signalQuality: number;
   beatTimestamps: number[];
   bvp: number[];
@@ -30,7 +29,6 @@ export function vitalSignsDataFromSnapshot(snapshot: SensorSnapshot): VitalSigns
     sdnn: snapshot.prv.available ? snapshot.prv.value?.sdnn ?? null : null,
     rmssd: snapshot.prv.available ? snapshot.prv.value?.rmssd ?? null : null,
     breathRate: snapshot.respiration.available ? snapshot.respiration.value : null,
-    spo2: null,
     signalQuality: snapshot.signalQuality.available ? snapshot.signalQuality.value ?? 0 : 0,
     beatTimestamps: [],
     bvp: snapshot.bvp.available ? snapshot.bvp.value ?? [] : [],
@@ -149,7 +147,8 @@ export const VitalSigns: React.FC<VitalSignsProps> = ({ vitalSigns, isLive }) =>
         </div>
 
         <div className="rounded-lg bg-gray-50 p-3">
-          <p className="text-xs text-gray-500">HRV (RMSSD)</p>
+          <p className="text-xs text-gray-500">PRV (RMSSD) — experimental</p>
+          <p className="text-[10px] text-gray-400 italic">Derived from pulse intervals, not ECG</p>
           <p className="text-xl font-bold text-gray-800">
             {formatValue(vitalSigns.rmssd, 'ms', 1)}
           </p>
@@ -159,13 +158,6 @@ export const VitalSigns: React.FC<VitalSignsProps> = ({ vitalSigns, isLive }) =>
           <p className="text-xs text-gray-500">SDNN</p>
           <p className="text-xl font-bold text-gray-800">
             {formatValue(vitalSigns.sdnn, 'ms', 1)}
-          </p>
-        </div>
-
-        <div className="rounded-lg bg-gray-50 p-3">
-          <p className="text-xs text-gray-500">SpO2</p>
-          <p className="text-xl font-bold text-gray-800">
-            {formatValue(vitalSigns.spo2, '%')}
           </p>
         </div>
 

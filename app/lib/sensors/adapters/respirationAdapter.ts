@@ -66,7 +66,12 @@ export function createRespirationAdapter(): SensorAdapter {
 
   async function init(ctx: AdapterContext): Promise<Capability[]> {
     ctxRef = ctx;
-    return capabilities;
+    ctx.report('respiration', null, {
+      available: false,
+      reason: 'BVP-based respiration not validated — disabled until proper chest-motion pipeline is implemented',
+      derived: true,
+    });
+    return [];
   }
 
   function start() {

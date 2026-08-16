@@ -92,7 +92,6 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({ onEmotionChange, onVital
       sdnn: snapshot.prv.available ? snapshot.prv.value?.sdnn ?? null : null,
       rmssd: snapshot.prv.available ? snapshot.prv.value?.rmssd ?? null : null,
       breathRate: snapshot.respiration.available ? snapshot.respiration.value : null,
-      spo2: null,
       signalQuality: snapshot.signalQuality.available ? snapshot.signalQuality.value ?? 0 : 0,
       beatTimestamps: [],
       bvp: snapshot.bvp.available ? snapshot.bvp.value ?? [] : [],

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { VisualTokens, defaultTokens, VisualMode, modeMeta } from '@/app/lib/designTokens';
+import { useSensorHub } from '@/app/hooks/useSensorHub';
 
 interface ChatDemoProps {
   initialTokens?: VisualTokens;
@@ -13,13 +14,6 @@ interface Message {
   text: string;
   sender: 'me' | 'other';
   timestamp: Date;
-}
-
-interface EmotionRecord {
-  emotion: string;
-  color: string;
-  timestamp: Date;
-  heartRate: number | null;
 }
 
 const emotionColors: Record<string, string> = {
@@ -73,29 +67,23 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
   const [isTyping, setIsTyping] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
-  const [cameraReady, setCameraReady] = useState(false);
-  const [currentEmotion, setCurrentEmotion] = useState<string>('neutral');
-  const [heartRate, setHeartRate] = useState<number | null>(null);
-  const [emotionHistory, setEmotionHistory] = useState<EmotionRecord[]>([]);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sessionDuration, setSessionDuration] = useState(0);
-  const [autoBackground, setAutoBackground] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const landmarkerRef = useRef<any>(null);
-  const rafRef = useRef<number | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const sampleBufferRef = useRef<number[]>([]);
-  const bpmHistoryRef = useRef<number[]>([]);
-  const mountedRef = useRef(true);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const { videoRef, snapshot, status, start, stop } = useSensorHub();
+  const cameraRunning = status === 'running' || status === 'paused' || status === 'initializing';
+
+  const currentEmotion = snapshot?.facialExpression.value?.label ?? 'neutral';
+  const emotionScores = snapshot?.facialExpression.value?.scores ?? {};
+  const heartRate = snapshot?.heartRate.available ? snapshot.heartRate.value : null;
+
+  const topEmotions = Object.entries(emotionScores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
 
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
@@ -105,215 +93,15 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    if (sessionDuration > 0 && sessionDuration % 30 === 0 && emotionHistory.length > 0) {
-      const records = emotionHistory.slice(-10);
-      const emotionCounts: Record<string, number> = {};
-      records.forEach((r) => {
-        emotionCounts[r.emotion] = (emotionCounts[r.emotion] || 0) + 1;
-      });
-      const dominant = Object.entries(emotionCounts).sort((a, b) => b[1] - a[1])[0];
-      if (dominant) {
-        const bestColor = records.find((r) => r.emotion === dominant[0])?.color || '#F3F4F6';
-        const hrRecords = records.filter((r) => r.heartRate);
-        const avgHR = hrRecords.length > 0
-          ? hrRecords.reduce((a, b) => a + (b.heartRate || 0), 0) / hrRecords.length
-          : null;
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            text: `Insight: When you were feeling ${dominant[0]}, the ${bestColor} background felt most natural.${avgHR ? ` Your average heart rate was ${Math.round(avgHR)} bpm.` : ''}`,
-            sender: 'other',
-            timestamp: new Date(),
-          },
-        ]);
-      }
+  const handleToggleCamera = () => {
+    if (showCamera) {
+      stop();
+      setShowCamera(false);
+    } else {
+      setShowCamera(true);
+      start();
     }
-  }, [sessionDuration, emotionHistory]);
-
-  const detectEmotion = useCallback((blend: { categoryName: string; score: number }[]): string => {
-    const get = (name: string) => blend.find((b) => b.categoryName === name)?.score ?? 0;
-    const smile = (get('mouthSmileLeft') + get('mouthSmileRight')) / 2;
-    const frown = (get('mouthFrownLeft') + get('mouthFrownRight')) / 2;
-    const browDown = (get('browDownLeft') + get('browDownRight')) / 2;
-    const browUp = get('browInnerUp');
-    const jawOpen = get('jawOpen');
-    const eyeWide = (get('eyeWideLeft') + get('eyeWideRight')) / 2;
-
-    if (smile > 0.5) return 'happy';
-    if (browDown > 0.4 && frown > 0.3) return 'angry';
-    if (browUp > 0.4 && jawOpen > 0.3) return 'surprise';
-    if (browDown > 0.3 && frown > 0.2) return 'frustrated';
-    if (eyeWide > 0.4) return 'curious';
-    if (smile > 0.3) return 'calm';
-    return 'neutral';
-  }, []);
-
-  const extractForeheadColor = useCallback((video: HTMLVideoElement): { r: number; g: number; b: number } | null => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    ctx.drawImage(video, video.videoWidth * 0.5, video.videoHeight * 0.3, 10, 10, 0, 0, 1, 1);
-    const pixel = ctx.getImageData(0, 0, 1, 1).data;
-    return { r: pixel[0], g: pixel[1], b: pixel[2] };
-  }, []);
-
-  const calculateBPM = useCallback((color: { r: number; g: number; b: number }): number | null => {
-    const green = color.g / (color.r + color.g + color.b + 1);
-    sampleBufferRef.current.push(green);
-    if (sampleBufferRef.current.length > 150) sampleBufferRef.current.shift();
-    if (sampleBufferRef.current.length < 30) return null;
-
-    const samples = sampleBufferRef.current;
-    const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
-    const std = Math.sqrt(samples.reduce((a, b) => a + (b - mean) ** 2, 0) / samples.length);
-    const threshold = mean + std * 0.3;
-
-    let peaks: number[] = [];
-    for (let i = 1; i < samples.length - 1; i++) {
-      if (samples[i] > samples[i - 1] && samples[i] > samples[i + 1] && samples[i] > threshold) {
-        peaks.push(i);
-      }
-    }
-
-    if (peaks.length < 2) return null;
-
-    let totalInterval = 0;
-    let count = 0;
-    for (let i = 1; i < peaks.length; i++) {
-      const interval = (peaks[i] - peaks[i - 1]) * (1000 / 30);
-      if (interval > 300 && interval < 2000) {
-        totalInterval += interval;
-        count++;
-      }
-    }
-
-    if (count === 0) return null;
-
-    const avgInterval = totalInterval / count;
-    const bpm = Math.round(60000 / avgInterval);
-
-    bpmHistoryRef.current.push(bpm);
-    if (bpmHistoryRef.current.length > 5) bpmHistoryRef.current.shift();
-
-    const sorted = [...bpmHistoryRef.current].sort((a, b) => a - b);
-    return sorted[Math.floor(sorted.length / 2)];
-  }, []);
-
-  const startDetection = useCallback(() => {
-    const detect = () => {
-      if (!mountedRef.current) return;
-
-      const video = videoRef.current;
-      const landmarker = landmarkerRef.current;
-      if (!video || !landmarker || video.readyState < 2) {
-        rafRef.current = requestAnimationFrame(detect);
-        return;
-      }
-
-      try {
-        const result = landmarker.detectForVideo(video, performance.now());
-        if (result.faceLandmarks?.length > 0) {
-          const blend = result.faceBlendshapes?.[0]?.categories ?? [];
-          const emotion = detectEmotion(blend);
-          setCurrentEmotion(emotion);
-
-          if (autoBackground) {
-            const newColor = emotionColors[emotion] || '#F3F4F6';
-            setTokens((prev) => ({
-              ...prev,
-              color: { ...prev.color, canvas: newColor },
-            }));
-          }
-
-          const color = extractForeheadColor(video);
-          if (color) {
-            const bpm = calculateBPM(color);
-            if (bpm) setHeartRate(bpm);
-          }
-
-          setEmotionHistory((prev) => [
-            ...prev.slice(-50),
-            {
-              emotion,
-              color: emotionColors[emotion] || '#F3F4F6',
-              timestamp: new Date(),
-              heartRate: null,
-            },
-          ]);
-        }
-      } catch {
-        // ignore detection errors
-      }
-
-      rafRef.current = requestAnimationFrame(detect);
-    };
-
-    rafRef.current = requestAnimationFrame(detect);
-  }, [autoBackground, detectEmotion, extractForeheadColor, calculateBPM]);
-
-  const initCamera = useCallback(async () => {
-    if (!mountedRef.current) return;
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: 320, height: 240 },
-      });
-
-      if (!mountedRef.current) {
-        stream.getTracks().forEach((t) => t.stop());
-        return;
-      }
-
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
-      }
-
-      const vision = await import('@mediapipe/tasks-vision');
-      const { FaceLandmarker, FilesetResolver } = vision;
-
-      const filesetResolver = await FilesetResolver.forVisionTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'
-      );
-
-      if (!mountedRef.current) return;
-
-      landmarkerRef.current = await FaceLandmarker.createFromOptions(filesetResolver, {
-        baseOptions: { modelAssetPath: '/models/face_landmarker.task', delegate: 'GPU' },
-        outputFaceBlendshapes: true,
-        runningMode: 'VIDEO',
-        numFaces: 1,
-      });
-
-      setCameraReady(true);
-      startDetection();
-    } catch (err) {
-      console.error('Camera init failed:', err);
-      if (mountedRef.current) setShowCamera(false);
-    }
-  }, [startDetection]);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-    };
-  }, []);
-
-  useEffect(() => {
-    if (showCamera && !cameraReady) {
-      initCamera();
-    }
-  }, [showCamera, cameraReady, initCamera]);
+  };
 
   const sendMessage = () => {
     if (!input.trim()) return;
@@ -356,22 +144,6 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const getEmotionInsights = () => {
-    const emotionCounts: Record<string, number> = {};
-    emotionHistory.forEach((r) => {
-      emotionCounts[r.emotion] = (emotionCounts[r.emotion] || 0) + 1;
-    });
-    return Object.entries(emotionCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([emotion, count]) => ({
-        emotion,
-        count,
-        color: emotionColors[emotion],
-        percentage: Math.round((count / emotionHistory.length) * 100),
-      }));
   };
 
   return (
@@ -418,7 +190,7 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
               className="px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1"
               style={{ backgroundColor: tokens.color.surfaceRaised, color: tokens.color.textSecondary }}
             >
-              <span className="text-red-500">♥</span> {heartRate} bpm
+              <span className="text-red-500">♥</span> {Math.round(heartRate)} bpm
             </div>
           )}
           <button
@@ -449,15 +221,6 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
             <p className="text-xs font-medium" style={{ color: tokens.color.textSecondary }}>
               Conversation atmosphere
             </p>
-            <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: tokens.color.textSecondary }}>
-              <input
-                type="checkbox"
-                checked={autoBackground}
-                onChange={(e) => setAutoBackground(e.target.checked)}
-                className="w-3 h-3 rounded"
-              />
-              Auto-adapt to emotion
-            </label>
           </div>
           <div className="flex gap-2 flex-wrap">
             {themes.map(({ mode, label }) => {
@@ -467,7 +230,6 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
                 <button
                   key={mode}
                   onClick={() => {
-                    setAutoBackground(false);
                     setTokens(themeTokens);
                     setShowThemePicker(false);
                   }}
@@ -484,7 +246,7 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
             })}
           </div>
           <p className="text-xs mt-2" style={{ color: tokens.color.textSecondary }}>
-            Applies only to your view · Auto mode uses face detection
+            Applies only to your view
           </p>
         </div>
       )}
@@ -497,7 +259,7 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
           <h3 className="font-medium text-sm mb-3" style={{ color: tokens.color.textPrimary }}>
             Session Insights
           </h3>
-          <div className="grid grid-cols-3 gap-3 mb-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="text-center p-2 rounded-lg" style={{ backgroundColor: tokens.color.surfaceRaised }}>
               <p className="text-lg font-bold" style={{ color: tokens.color.textPrimary }}>
                 {formatTime(sessionDuration)}
@@ -508,33 +270,15 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
               <p className="text-lg font-bold capitalize" style={{ color: tokens.color.textPrimary }}>
                 {currentEmotion}
               </p>
-              <p className="text-xs" style={{ color: tokens.color.textSecondary }}>Current</p>
+              <p className="text-xs" style={{ color: tokens.color.textSecondary }}>Expression</p>
             </div>
             <div className="text-center p-2 rounded-lg" style={{ backgroundColor: tokens.color.surfaceRaised }}>
               <p className="text-lg font-bold" style={{ color: tokens.color.textPrimary }}>
-                {heartRate || '--'}
+                {heartRate ? Math.round(heartRate) : '--'}
               </p>
               <p className="text-xs" style={{ color: tokens.color.textSecondary }}>Heart Rate</p>
             </div>
           </div>
-          {emotionHistory.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium" style={{ color: tokens.color.textSecondary }}>
-                Emotion Distribution
-              </p>
-              {getEmotionInsights().map((insight) => (
-                <div key={insight.emotion} className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: insight.color }} />
-                  <span className="text-xs capitalize flex-1" style={{ color: tokens.color.textPrimary }}>
-                    {insight.emotion}
-                  </span>
-                  <span className="text-xs" style={{ color: tokens.color.textSecondary }}>
-                    {insight.percentage}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
@@ -585,45 +329,69 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
       </div>
 
       {showCamera && (
-        <div className="px-4 py-2 border-t" style={{ borderColor: tokens.color.border }}>
-          <div className="flex items-center gap-3">
-            <video
-              ref={videoRef}
-              className="w-16 h-12 rounded-lg object-cover"
-              muted
-              playsInline
-              style={{ backgroundColor: tokens.color.surfaceRaised }}
-            />
-            <canvas ref={canvasRef} className="hidden" />
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: emotionColors[currentEmotion] }}
-                />
-                <span className="text-xs font-medium capitalize" style={{ color: tokens.color.textPrimary }}>
-                  {currentEmotion}
-                </span>
+        <div
+          className="fixed bottom-20 right-4 z-50 rounded-2xl overflow-hidden shadow-2xl transition-all duration-300"
+          style={{
+            width: '180px',
+            height: '140px',
+            backgroundColor: tokens.color.surface,
+            border: `2px solid ${emotionColors[currentEmotion] || tokens.color.border}`,
+          }}
+        >
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover"
+            muted
+            playsInline
+          />
+          <div
+            className="absolute bottom-0 inset-x-0 px-2 py-1.5 space-y-0.5"
+            style={{ backgroundColor: `${tokens.color.surface}ee` }}
+          >
+            {topEmotions.length > 0 ? (
+              topEmotions.map(([emotion, score]) => (
+                <div key={emotion} className="flex items-center gap-1.5">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: emotionColors[emotion] || '#888' }}
+                  />
+                  <span className="text-[9px] capitalize w-12 shrink-0" style={{ color: tokens.color.textPrimary }}>
+                    {emotion}
+                  </span>
+                  <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${tokens.color.border}` }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, score * 100)}%`,
+                        backgroundColor: emotionColors[emotion] || '#888',
+                      }}
+                    />
+                  </div>
+                  <span className="text-[8px] w-6 text-right" style={{ color: tokens.color.textSecondary }}>
+                    {(score * 100).toFixed(0)}%
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: emotionColors['neutral'] }} />
+                <span className="text-[9px] capitalize" style={{ color: tokens.color.textPrimary }}>Detecting...</span>
               </div>
-              {heartRate && (
-                <p className="text-xs" style={{ color: tokens.color.textSecondary }}>
-                  ♥ {heartRate} bpm
-                </p>
-              )}
-            </div>
-            <button
-              onClick={() => {
-                setShowCamera(false);
-                setCameraReady(false);
-                streamRef.current?.getTracks().forEach((t) => t.stop());
-                streamRef.current = null;
-              }}
-              className="text-xs px-2 py-1 rounded"
-              style={{ color: tokens.color.textSecondary }}
-            >
-              Hide
-            </button>
+            )}
+            {heartRate && (
+              <div className="flex items-center gap-1 pt-0.5 border-t" style={{ borderColor: `${tokens.color.border}` }}>
+                <span className="text-[9px] text-red-500">♥</span>
+                <span className="text-[9px]" style={{ color: tokens.color.textSecondary }}>{Math.round(heartRate)} bpm</span>
+              </div>
+            )}
           </div>
+          <button
+            onClick={handleToggleCamera}
+            className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] opacity-60 hover:opacity-100 transition-opacity"
+            style={{ backgroundColor: `${tokens.color.surface}cc`, color: tokens.color.textSecondary }}
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -632,18 +400,19 @@ export const ChatDemo: React.FC<ChatDemoProps> = ({ initialTokens, onBack }) => 
         style={{ backgroundColor: tokens.color.surface, borderColor: tokens.color.border }}
       >
         <div className="flex gap-2 items-center">
-          {!showCamera && (
-            <button
-              onClick={() => setShowCamera(true)}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-              style={{ backgroundColor: tokens.color.surfaceRaised, color: tokens.color.textSecondary }}
-              title="Enable camera for emotion detection"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            </button>
-          )}
+          <button
+            onClick={handleToggleCamera}
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+            style={{
+              backgroundColor: showCamera ? tokens.color.accent : tokens.color.surfaceRaised,
+              color: showCamera ? tokens.color.accentText : tokens.color.textSecondary,
+            }}
+            title={showCamera ? 'Disable camera' : 'Enable camera for facial expression sensing'}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </button>
           <input
             type="text"
             value={input}

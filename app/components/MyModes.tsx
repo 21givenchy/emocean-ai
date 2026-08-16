@@ -21,7 +21,17 @@ export const MyModes: React.FC<MyModesProps> = ({ onNewMode, onSelectMode }) => 
   const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('coloring-ai-modes');
+    const STORAGE_KEY = 'emocean-modes';
+    const LEGACY_KEY = 'coloring-ai-modes';
+
+    // Migrate legacy key if present
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if (legacy) {
+      localStorage.setItem(STORAGE_KEY, legacy);
+      localStorage.removeItem(LEGACY_KEY);
+    }
+
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -38,7 +48,7 @@ export const MyModes: React.FC<MyModesProps> = ({ onNewMode, onSelectMode }) => 
   const handleDelete = (id: string) => {
     const updated = modes.filter((m) => m.id !== id);
     setModes(updated);
-    localStorage.setItem('coloring-ai-modes', JSON.stringify(updated));
+    localStorage.setItem('emocean-modes', JSON.stringify(updated));
     if (activeId === id) {
       setActiveId(updated[0]?.id || null);
     }
@@ -55,7 +65,7 @@ export const MyModes: React.FC<MyModesProps> = ({ onNewMode, onSelectMode }) => 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <nav className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
-        <span className="font-semibold text-gray-800 text-lg">Coloring AI</span>
+        <span className="font-semibold text-gray-800 text-lg">EMOCEAN</span>
         <button
           onClick={onNewMode}
           className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
