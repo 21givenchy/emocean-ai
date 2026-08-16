@@ -76,6 +76,7 @@ async function main() {
     'proj.tflite',                                // rppgProj
     'sqi_model.tflite',                           // sqi
     'psd_model.tflite',                           // psd
+    'state.gz',                                   // state
     'enet_b0_8_best_vgaf_dynamic_int8.tflite',    // emotion
     'mobileone_s0_gaze_float16.tflite',           // gaze
     'blaze_face_short_range.tflite',              // faceDetector
