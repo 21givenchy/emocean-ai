@@ -340,12 +340,20 @@ export interface FactorScore {
   factorId: FactorType;
   variantScores: Record<string, { taskAvg: number; selfReportAvg: number; n: number }>;
   bestVariantId: string;
-  confidence: number;
+  /**
+   * `null` means "not estimable from this session's data" — e.g. a single trial
+   * per variant, which cannot support an effect size. Consumers must render the
+   * absence, not coerce it to 0%.
+   */
+  confidence: number | null;
+  /** Why confidence is null, for display. `null` when confidence is available. */
+  confidenceUnavailableReason: string | null;
 }
 
 export interface AssessmentScore {
   factorScores: FactorScore[];
-  overallConfidence: number;
+  /** `null` when no factor produced an estimable confidence. */
+  overallConfidence: number | null;
   recommendation: Partial<Record<FactorType, string>>;
 }
 
@@ -360,16 +368,35 @@ function stdDev(arr: number[]): number {
   return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / (arr.length - 1));
 }
 
-function cohenD(a: number[], b: number[]): number {
-  if (a.length === 0 || b.length === 0) return 0;
+/**
+ * Pooled-variance Cohen's d.
+ *
+ * Returns `null` when the effect size is not defined for the data given, rather
+ * than a number that looks like a measurement but is not one. Two cases matter:
+ *
+ *  - degrees of freedom <= 0. With one observation per group (quick mode) the
+ *    pooled-variance denominator is `n1 + n2 - 2 === 0`, so the expression is
+ *    0/0 -> NaN. NaN then propagates through `Math.min(1, NaN / 1.2)` and is
+ *    rendered as "NaN%". There is no within-group variance to pool from a single
+ *    observation, so the honest answer is "undefined", not "zero".
+ *  - zero pooled spread. Both groups constant; the standardised difference is
+ *    undefined regardless of how far apart the means are.
+ */
+function cohenD(a: number[], b: number[]): number | null {
+  if (a.length === 0 || b.length === 0) return null;
+
+  const df = a.length + b.length - 2;
+  if (df <= 0) return null;
+
   const mA = mean(a);
   const mB = mean(b);
   const pooledStd = Math.sqrt(
-    ((a.length - 1) * stdDev(a) ** 2 + (b.length - 1) * stdDev(b) ** 2) /
-      (a.length + b.length - 2)
+    ((a.length - 1) * stdDev(a) ** 2 + (b.length - 1) * stdDev(b) ** 2) / df
   );
-  if (pooledStd === 0) return 0;
-  return (mA - mB) / pooledStd;
+  if (!Number.isFinite(pooledStd) || pooledStd === 0) return null;
+
+  const d = (mA - mB) / pooledStd;
+  return Number.isFinite(d) ? d : null;
 }
 
 export function scoreAssessment(results: TrialResult[]): AssessmentScore {
@@ -413,26 +440,46 @@ export function scoreAssessment(results: TrialResult[]): AssessmentScore {
       }
     }
 
-    // Confidence from repeat consistency
-    let confidence = 0;
-    if (factorResults.length >= 2) {
-      const uniqueVariants = [...new Set(factorResults.map((r) => r.variantId))];
-      if (uniqueVariants.length >= 2) {
-        const groups = uniqueVariants.map((vid) =>
-          factorResults
-            .filter((r) => r.variantId === vid)
-            .map((r) => (r.taskMetrics?.correct ? 1 : 0))
-        );
-        const validGroups = groups.filter((g) => g.length >= 1);
-        if (validGroups.length >= 2) {
-          const d = Math.abs(cohenD(validGroups[0], validGroups[1]));
+    // Confidence from effect size between the two most-tested variant groups.
+    // Deliberately reports "not estimable" rather than a low-looking number when
+    // the session cannot support the statistic — a single trial per variant has
+    // no within-group variance, so there is nothing to be confident about.
+    let confidence: number | null = null;
+    let confidenceUnavailableReason: string | null =
+      'Not enough trials for this factor to estimate confidence.';
+
+    const uniqueVariants = [...new Set(factorResults.map((r) => r.variantId))];
+    if (uniqueVariants.length < 2) {
+      confidenceUnavailableReason =
+        'Only one variant of this factor was completed, so there is nothing to compare it against.';
+    } else {
+      const groups = uniqueVariants.map((vid) =>
+        factorResults
+          .filter((r) => r.variantId === vid)
+          .map((r) => (r.taskMetrics?.correct ? 1 : 0))
+      );
+      // Compare the two best-sampled groups; effect size needs spread, not just presence.
+      const rankedGroups = [...groups].sort((x, y) => y.length - x.length);
+      const [groupA, groupB] = rankedGroups;
+
+      if (groupA.length + groupB.length - 2 <= 0) {
+        confidenceUnavailableReason =
+          'This factor was measured once per option. A single trial per option cannot support a confidence estimate — run a Deep assessment for repeated trials.';
+      } else {
+        const rawD = cohenD(groupA, groupB);
+        if (rawD === null) {
+          confidenceUnavailableReason =
+            'Task outcomes for this factor were identical across trials, so the difference between options cannot be quantified.';
+        } else {
           // Map effect size to confidence: d < 0.2 = low, 0.2-0.8 = medium, > 0.8 = high
-          confidence = Math.min(1, d / 1.2);
+          confidence = Math.min(1, Math.abs(rawD) / 1.2);
+          confidenceUnavailableReason = null;
+
+          // Boost slightly when the factor was measured across repeated passes.
+          const repeatCount = new Set(factorResults.map((r) => r.repeatIndex)).size;
+          if (repeatCount >= 2) confidence = Math.min(1, confidence + 0.15);
         }
       }
-      // Boost confidence if we have repeats
-      const repeatCount = new Set(factorResults.map((r) => r.repeatIndex)).size;
-      if (repeatCount >= 2) confidence = Math.min(1, confidence + 0.15);
     }
 
     factorScores.push({
@@ -440,15 +487,21 @@ export function scoreAssessment(results: TrialResult[]): AssessmentScore {
       variantScores,
       bestVariantId: bestId,
       confidence,
+      confidenceUnavailableReason,
     });
 
     recommendation[factor.id] = bestId;
   }
 
+  // Average only over factors that actually produced an estimate. Treating a
+  // non-estimable factor as 0 would silently drag the headline number down and
+  // present "we could not measure this" as "we measured this and it was poor".
+  const estimableConfidences = factorScores
+    .map((f) => f.confidence)
+    .filter((c): c is number => c !== null);
+
   const overallConfidence =
-    factorScores.length > 0
-      ? mean(factorScores.map((f) => f.confidence))
-      : 0;
+    estimableConfidences.length > 0 ? mean(estimableConfidences) : null;
 
   return { factorScores, overallConfidence, recommendation };
 }

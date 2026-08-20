@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { VisualMode, VisualTokens, modeMeta, defaultTokens } from '@/app/lib/designTokens';
+import React, { useState, useEffect, use } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { VisualMode, VisualTokens, modeMeta } from '@/app/lib/designTokens';
 import {
   AssessmentScore,
   FactorScore,
@@ -13,11 +15,6 @@ import {
   applyVariant,
 } from '@/app/lib/assessment/engine';
 
-interface ResultsPageProps {
-  sessionId: string;
-  onBack: () => void;
-}
-
 interface SessionData {
   mode: VisualMode;
   assessmentMode: AssessmentMode;
@@ -27,26 +24,93 @@ interface SessionData {
   sessionId: string;
 }
 
-export default function ResultsPageClient({ sessionId, onBack }: ResultsPageProps) {
+type LoadState = 'loading' | 'found' | 'missing';
+
+/**
+ * App Router passes `{ params, searchParams }` to a page — not arbitrary props.
+ * The previous signature destructured `{ sessionId, onBack }`, so `sessionId`
+ * was always `undefined`, the storage key resolved to
+ * `emocean-session-undefined`, and the page sat on "Loading results…" forever
+ * while `onBack` was an undefined function waiting to throw.
+ *
+ * In Next 16 `params` is a promise, unwrapped here with `React.use`.
+ */
+export default function ResultsPageClient({
+  params,
+}: {
+  params: Promise<{ sessionId: string }>;
+}) {
+  const { sessionId } = use(params);
+  const router = useRouter();
+
   const [session, setSession] = useState<SessionData | null>(null);
+  const [loadState, setLoadState] = useState<LoadState>('loading');
   const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
 
+  const onBack = () => router.push('/lab');
+
   useEffect(() => {
+    if (!sessionId) {
+      setLoadState('missing');
+      return;
+    }
+
     const data = sessionStorage.getItem(`emocean-session-${sessionId}`);
-    if (data) {
-      try {
-        setSession(JSON.parse(data));
-      } catch {
-        // ignore
-      }
+    if (!data) {
+      setLoadState('missing');
+      return;
+    }
+
+    try {
+      setSession(JSON.parse(data));
+      setLoadState('found');
+    } catch {
+      setLoadState('missing');
     }
   }, [sessionId]);
 
-  if (!session) {
+  if (loadState === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#071318', color: '#F5F7F2' }}>
         <div className="text-center">
+          <div
+            className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+            style={{ borderColor: '#67E8D4', borderTopColor: 'transparent' }}
+          />
           <p style={{ color: '#A9BAB8' }}>Loading results…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadState === 'missing' || !session) {
+    return (
+      <div
+        className="flex min-h-screen flex-col items-center justify-center px-6 text-center"
+        style={{ backgroundColor: '#071318', color: '#F5F7F2' }}
+      >
+        <div className="w-full max-w-md">
+          <h1 className="mb-3 text-2xl font-semibold">These results are no longer available</h1>
+          <p className="mb-8" style={{ color: '#A9BAB8' }}>
+            Session results are held only in this browser tab and are cleared when it closes. We do
+            not keep a copy on a server, so there is nothing for us to restore.
+          </p>
+          <div className="space-y-3">
+            <Link
+              href="/lab/interface"
+              className="block w-full rounded-xl py-4 font-medium transition-colors"
+              style={{ backgroundColor: '#67E8D4', color: '#071318' }}
+            >
+              Run a new assessment
+            </Link>
+            <Link
+              href="/lab"
+              className="block w-full rounded-xl border py-3 text-sm transition-colors"
+              style={{ borderColor: 'rgba(245,247,242,.12)', color: '#F5F7F2' }}
+            >
+              Back to the Lab
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -107,16 +171,33 @@ export default function ResultsPageClient({ sessionId, onBack }: ResultsPageProp
         {/* Confidence */}
         <div className="p-6 rounded-2xl border mb-8 text-center" style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}>
           <p className="text-sm mb-2" style={{ color: '#A9BAB8' }}>Overall confidence</p>
-          <div className="text-5xl font-bold mb-2" style={{ color: '#67E8D4' }}>
-            {Math.round(score.overallConfidence * 100)}%
-          </div>
-          <p className="text-sm" style={{ color: '#A9BAB8' }}>
-            {score.overallConfidence >= 0.7
-              ? 'Strong evidence from repeated trials'
-              : score.overallConfidence >= 0.4
-              ? 'Moderate evidence — more trials would improve confidence'
-              : 'Limited evidence — results are preliminary'}
-          </p>
+          {score.overallConfidence === null ? (
+            <>
+              <div className="text-2xl font-semibold mb-2" style={{ color: '#F4B86A' }}>
+                Not estimable
+              </div>
+              <p className="text-sm max-w-md mx-auto" style={{ color: '#A9BAB8' }}>
+                This session did not include enough repeated trials to support a confidence
+                estimate, so we are not showing one.{' '}
+                {assessmentMode === 'quick'
+                  ? 'A Deep assessment repeats each comparison, which makes the difference between options measurable.'
+                  : 'Completing more trials would make the difference between options measurable.'}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="text-5xl font-bold mb-2" style={{ color: '#67E8D4' }}>
+                {Math.round(score.overallConfidence * 100)}%
+              </div>
+              <p className="text-sm" style={{ color: '#A9BAB8' }}>
+                {score.overallConfidence >= 0.7
+                  ? 'Strong evidence from repeated trials'
+                  : score.overallConfidence >= 0.4
+                  ? 'Moderate evidence — more trials would improve confidence'
+                  : 'Limited evidence — results are preliminary'}
+              </p>
+            </>
+          )}
         </div>
 
         {/* Factor breakdown */}
@@ -210,11 +291,17 @@ export default function ResultsPageClient({ sessionId, onBack }: ResultsPageProp
         {/* Evidence boundary */}
         <div className="p-6 rounded-2xl border" style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}>
           <h3 className="font-semibold mb-2">What this tells you</h3>
-          <p className="text-sm" style={{ color: '#A9BAB8' }}>
-            These results reflect your preferences for this specific task context. They are not a
+          <p className="text-sm mb-3" style={{ color: '#A9BAB8' }}>
+            These results reflect this one session, in this one task context. They are not a
             personality label or a permanent trait. Your best interface may differ for other tasks,
-            times of day, or mental states. Physiology data (if collected) provides additional context
-            but never overrides your stated preference.
+            times of day, or mental states.
+          </p>
+          <p className="text-sm" style={{ color: '#A9BAB8' }}>
+            The scores above currently combine how you performed with what you said you preferred.
+            Those two things often disagree, and blending them can let a well-liked but slower option
+            win. Read this as the best option measured in this session, not as &ldquo;the best option
+            for you&rdquo;. Separating measured performance from stated preference is the next change
+            to this engine.
           </p>
         </div>
       </main>
@@ -243,8 +330,23 @@ function FactorBreakdown({
         <div>
           <h3 className="font-medium">{factor.label}</h3>
           <p className="text-xs" style={{ color: '#A9BAB8' }}>
-            {factor.description} · Confidence: {Math.round(factorScore.confidence * 100)}%
+            {factor.description} ·{' '}
+            {factorScore.confidence === null ? (
+              <span
+                style={{ color: '#F4B86A' }}
+                title={factorScore.confidenceUnavailableReason ?? undefined}
+              >
+                Confidence not estimable
+              </span>
+            ) : (
+              <>Confidence: {Math.round(factorScore.confidence * 100)}%</>
+            )}
           </p>
+          {factorScore.confidence === null && factorScore.confidenceUnavailableReason && (
+            <p className="text-xs mt-1 max-w-md" style={{ color: '#A9BAB8', opacity: 0.75 }}>
+              {factorScore.confidenceUnavailableReason}
+            </p>
+          )}
         </div>
         <div className="text-right">
           <p className="text-sm font-medium" style={{ color: '#67E8D4' }}>

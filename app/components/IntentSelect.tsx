@@ -16,7 +16,17 @@ export const IntentSelect: React.FC<IntentSelectProps> = ({ onSelect, onBack }) 
   const [assessmentMode, setAssessmentMode] = useState<AssessmentMode>('quick');
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: '#071318', color: '#F5F7F2' }}>
+    /*
+     * Top-aligned, not centred. When an intent is selected the "How thorough?"
+     * block appears and the page grows past the viewport; with `items-center`
+     * the primary CTA was pushed below the fold on a 390x664 phone and had to be
+     * scrolled to, which read as "the button does nothing". Content now flows
+     * from the top and the CTA is pinned within reach.
+     */
+    <div
+      className="min-h-screen flex items-start justify-center px-6 py-10"
+      style={{ backgroundColor: '#071318', color: '#F5F7F2' }}
+    >
       <div className="max-w-lg w-full">
         <button
           onClick={onBack}
@@ -92,17 +102,25 @@ export const IntentSelect: React.FC<IntentSelectProps> = ({ onSelect, onBack }) 
           </div>
         )}
 
-        <button
-          onClick={() => selectedMode && onSelect(selectedMode, assessmentMode)}
-          disabled={!selectedMode}
-          className="w-full py-4 rounded-xl text-lg font-medium transition-all"
+        {/* Sticky so it stays reachable once the depth selector expands the page. */}
+        <div
+          className="sticky bottom-0 -mx-6 px-6 pb-4 pt-4"
           style={{
-            backgroundColor: selectedMode ? '#67E8D4' : '#10242B',
-            color: selectedMode ? '#071318' : '#A9BAB8',
+            background: 'linear-gradient(to top, #071318 60%, rgba(7,19,24,0))',
           }}
         >
-          Begin assessment
-        </button>
+          <button
+            onClick={() => selectedMode && onSelect(selectedMode, assessmentMode)}
+            disabled={!selectedMode}
+            className="w-full py-4 rounded-xl text-lg font-medium transition-all"
+            style={{
+              backgroundColor: selectedMode ? '#67E8D4' : '#10242B',
+              color: selectedMode ? '#071318' : '#A9BAB8',
+            }}
+          >
+            {selectedMode ? 'Begin assessment' : 'Choose an intent to continue'}
+          </button>
+        </div>
       </div>
     </div>
   );

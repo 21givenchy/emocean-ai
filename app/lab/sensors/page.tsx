@@ -20,7 +20,8 @@ export default function SensorsPage() {
       <main className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="text-3xl font-bold mb-2">Sensor Diagnostics</h1>
         <p className="mb-6" style={{ color: '#A9BAB8' }}>
-          Experimental developer tools. Camera data is processed locally and never leaves your device.
+          Experimental developer tools. Camera processing is designed to run in your browser; we are
+          currently verifying that no camera-derived data leaves it and will publish the result.
         </p>
 
         <div className="p-4 rounded-xl border mb-6" style={{ backgroundColor: '#F4B86A10', borderColor: '#F4B86A30' }}>

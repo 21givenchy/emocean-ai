@@ -29,106 +29,131 @@ export default function ValidationPage() {
           Validation
         </p>
         <h1 className="text-4xl md:text-5xl font-bold mb-6">
-          Breathing-belt comparison study
+          Not yet measured.
         </h1>
         <p className="text-lg mb-12 max-w-2xl" style={{ color: '#A9BAB8' }}>
-          How accurate is camera-based breathing detection compared to a reference respiratory belt? We conducted a validation study to find out.
+          We have not run a reference-instrument comparison of our camera-based breathing
+          detection. Until we have, this page describes what we intend to do rather than what
+          we have found. There is no accuracy figure here because we do not have one.
         </p>
 
         <div className="space-y-10">
-          {/* Study design */}
-          <section className="p-8 rounded-2xl border" style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}>
-            <h2 className="text-2xl font-semibold mb-4">Study design</h2>
-            <div className="space-y-3" style={{ color: '#A9BAB8' }}>
-              <p>
-                <strong className="text-white">Reference device:</strong> Respiration belt (piezoelectric sensor) strapped around the upper chest, sampling at 256 Hz.
-              </p>
-              <p>
-                <strong className="text-white">Test device:</strong> EMOCEAN chest-motion adapter processing webcam video at 30 fps, analyzing upper-chest vertical displacement.
-              </p>
-              <p>
-                <strong className="text-white">Protocol:</strong> 30 participants performed 5-minute sessions with paced breathing at 6, 10, 15, and 20 breaths per minute, plus 2 minutes of free breathing.
-              </p>
-              <p>
-                <strong className="text-white">Environment:</strong> Controlled lighting, seated position, distance 40–60 cm from camera.
-              </p>
+          {/* Status */}
+          <section
+            className="p-8 rounded-2xl border"
+            style={{ backgroundColor: '#10242B', borderColor: '#F4B86A40' }}
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-xl leading-none" style={{ color: '#F4B86A' }}>
+                ⚠
+              </span>
+              <div>
+                <h2 className="text-2xl font-semibold mb-3">Current status</h2>
+                <p className="mb-3" style={{ color: '#A9BAB8' }}>
+                  Belt-referenced validation is <strong className="text-white">planned and has
+                  not been carried out</strong>. No participants have been run. No error figure,
+                  correlation, or success rate exists for the chest-motion adapter.
+                </p>
+                <p style={{ color: '#A9BAB8' }}>
+                  Treat every breathing signal in the Lab as an{' '}
+                  <strong className="text-white">unvalidated, experimental estimate</strong>. It
+                  is there to drive a responsive experience, not to tell you anything reliable
+                  about your body.
+                </p>
+              </div>
             </div>
           </section>
 
-          {/* Results */}
+          {/* Planned protocol */}
           <section>
-            <h2 className="text-2xl font-semibold mb-6">Results summary</h2>
-            <div className="grid md:grid-cols-3 gap-4 mb-8">
-              <div className="p-6 rounded-xl text-center" style={{ backgroundColor: '#10242B' }}>
-                <p className="text-sm mb-1" style={{ color: '#A9BAB8' }}>Mean absolute error</p>
-                <p className="text-3xl font-bold" style={{ color: '#67E8D4' }}>1.8 bpm</p>
-                <p className="text-xs mt-1" style={{ color: '#A9BAB8' }}>across all paced rates</p>
-              </div>
-              <div className="p-6 rounded-xl text-center" style={{ backgroundColor: '#10242B' }}>
-                <p className="text-sm mb-1" style={{ color: '#A9BAB8' }}>Correlation (r)</p>
-                <p className="text-3xl font-bold" style={{ color: '#67E8D4' }}>0.92</p>
-                <p className="text-xs mt-1" style={{ color: '#A9BAB8' }}>with reference belt</p>
-              </div>
-              <div className="p-6 rounded-xl text-center" style={{ backgroundColor: '#10242B' }}>
-                <p className="text-sm mb-1" style={{ color: '#A9BAB8' }}>Success rate</p>
-                <p className="text-3xl font-bold" style={{ color: '#67E8D4' }}>87%</p>
-                <p className="text-xs mt-1" style={{ color: '#A9BAB8' }}>of sessions usable</p>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-xl" style={{ backgroundColor: '#10242B' }}>
-              <h3 className="font-medium mb-3">Performance by breathing rate</h3>
-              <div className="space-y-3">
-                {[
-                  { rate: '6 bpm (slow)', error: '1.2 bpm', r: '0.95', note: 'Best performance — large chest excursion' },
-                  { rate: '10 bpm (normal)', error: '1.5 bpm', r: '0.93', note: 'Good performance — typical resting rate' },
-                  { rate: '15 bpm (fast)', error: '2.1 bpm', r: '0.89', note: 'Moderate — smaller movements, more noise' },
-                  { rate: '20 bpm (very fast)', error: '2.8 bpm', r: '0.84', note: 'Challenging — rapid small movements' },
-                ].map((row) => (
-                  <div key={row.rate} className="flex items-center gap-4 text-sm" style={{ color: '#A9BAB8' }}>
-                    <span className="w-32 font-medium text-white">{row.rate}</span>
-                    <span className="w-20">MAE: {row.error}</span>
-                    <span className="w-16">r = {row.r}</span>
-                    <span className="flex-1 text-xs">{row.note}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Limitations */}
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Known limitations</h2>
-            <div className="space-y-3" style={{ color: '#A9BAB8' }}>
-              {[
-                'Camera-based detection is sensitive to body movement — any torso motion degrades accuracy.',
-                'Loose clothing reduces the visible chest excursion, lowering signal quality.',
-                'Lighting conditions affect optical flow accuracy — very dim or very bright environments are problematic.',
-                'The adapter requires 4+ seconds of data before producing a valid estimate (calibration delay).',
-                'Fast breathing rates (>18 bpm) show larger errors due to smaller per-breath displacement.',
-                'This study used controlled conditions; real-world performance may vary.',
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <span style={{ color: '#F4B86A' }}>·</span>
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* What this means */}
-          <section className="p-8 rounded-2xl border" style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}>
-            <h2 className="text-2xl font-semibold mb-4">What this means for you</h2>
-            <p style={{ color: '#A9BAB8' }}>
-              Camera-based breathing detection is accurate enough for guided breathing experiences and general wellness applications. It is not a medical device and should not be used for clinical diagnosis or monitoring. For the Breathe the World Open experience, the adapter provides a responsive signal that drives the environment visualization with reasonable fidelity at typical breathing rates.
+            <h2 className="text-2xl font-semibold mb-4">The protocol we plan to run</h2>
+            <p className="mb-4" style={{ color: '#A9BAB8' }}>
+              Written here in advance so that the design is on record before any data is
+              collected, and so the results can be checked against the plan.
             </p>
+            <div className="space-y-3" style={{ color: '#A9BAB8' }}>
+              <p>
+                <strong className="text-white">Reference instrument:</strong> A respiration belt
+                worn on the upper chest, recorded simultaneously with the camera signal, serving
+                as the comparison standard.
+              </p>
+              <p>
+                <strong className="text-white">Test condition:</strong> The EMOCEAN chest-motion
+                adapter running on ordinary consumer webcams, with frame timing measured rather
+                than assumed.
+              </p>
+              <p>
+                <strong className="text-white">Breathing conditions:</strong> Both paced
+                breathing across a range of rates and unpaced natural breathing, since the two
+                behave differently and reporting only the paced case would flatter the adapter.
+              </p>
+              <p>
+                <strong className="text-white">Participants and environment:</strong> Recruited
+                to cover a range of skin tones, body types, clothing and lighting conditions.
+                A comparison run only under favourable conditions would not tell us what happens
+                in real use.
+              </p>
+            </div>
           </section>
 
-          {/* Future work */}
+          {/* Reporting commitment */}
+          <section
+            className="p-8 rounded-2xl border"
+            style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}
+          >
+            <h2 className="text-2xl font-semibold mb-4">What we will publish</h2>
+            <p className="mb-4" style={{ color: '#A9BAB8' }}>
+              When the comparison has been run, we will report these together, in one place. An
+              error figure on its own is misleading if the sessions it excludes are not counted
+              alongside it.
+            </p>
+            <div className="space-y-3" style={{ color: '#A9BAB8' }}>
+              <div className="flex items-start gap-3">
+                <span style={{ color: '#67E8D4' }}>·</span>
+                <span>
+                  <strong className="text-white">Error</strong> — how far the camera estimate
+                  sits from the belt reference, broken down by breathing rate rather than
+                  averaged into a single headline number.
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span style={{ color: '#67E8D4' }}>·</span>
+                <span>
+                  <strong className="text-white">Valid coverage</strong> — what proportion of
+                  recorded time produced a usable estimate at all, rather than only scoring the
+                  moments where the adapter was confident.
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span style={{ color: '#67E8D4' }}>·</span>
+                <span>
+                  <strong className="text-white">Failure rate</strong> — how often a session
+                  produced nothing usable, and under which conditions it failed.
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span style={{ color: '#67E8D4' }}>·</span>
+                <span>
+                  <strong className="text-white">Comparison to published work</strong> — how our
+                  figures sit against peer-reviewed camera-based respiration results, including
+                  the ones less favourable to us.
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* Why the page looks like this */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">Future validation</h2>
+            <h2 className="text-2xl font-semibold mb-4">Why this page has no numbers</h2>
+            <p className="mb-3" style={{ color: '#A9BAB8' }}>
+              An earlier version of this page presented a completed belt-comparison study with
+              specific error and correlation figures. That study was never conducted and those
+              figures were not real. They have been removed.
+            </p>
             <p style={{ color: '#A9BAB8' }}>
-              We are planning expanded validation studies including diverse populations, varied clothing, different camera hardware, and naturalistic (non-paced) breathing conditions. Results will be published as they become available.
+              We are recording that here rather than quietly deleting it, because a lab that
+              publishes numbers it did not measure should have to say so. Any figure that appears
+              on this page in future will be one we have measured and can show the workings for.
             </p>
           </section>
         </div>

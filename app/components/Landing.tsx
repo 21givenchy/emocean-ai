@@ -87,7 +87,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
 
       <footer className="max-w-6xl mx-auto px-6 py-8 border-t border-gray-100">
         <p className="text-sm text-gray-400 text-center">
-          Camera data never leaves your device · No cloud accounts · Local result generation
+          Camera processing designed to run in your browser · No cloud accounts · Local result generation
         </p>
       </footer>
     </div>

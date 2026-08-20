@@ -29,10 +29,12 @@ export default function PrivacyPage() {
           Privacy
         </p>
         <h1 className="text-4xl md:text-5xl font-bold mb-6">
-          Your data stays with you.
+          What we know, and what we can prove.
         </h1>
         <p className="text-lg mb-12 max-w-2xl" style={{ color: '#A9BAB8' }}>
-          EMOCEAN is designed to process signals locally. We only collect what you explicitly choose to share, and we explain every data flow before it happens.
+          EMOCEAN is built to process signals in your browser. We collect nothing you have not
+          explicitly chosen to share. Where we have verified a claim we say so; where verification is
+          still outstanding we say that instead of rounding it up to a guarantee.
         </p>
 
         <div className="space-y-10">
@@ -41,7 +43,7 @@ export default function PrivacyPage() {
             <div className="space-y-3" style={{ color: '#A9BAB8' }}>
               <div className="flex items-start gap-3">
                 <span style={{ color: '#67E8D4' }}>·</span>
-                <span><strong className="text-white">Camera feed</strong> — If you enable camera, video frames are processed on-device for expression estimation and vital signs (heart rate, breathing rate). Frames are never transmitted or stored.</span>
+                <span><strong className="text-white">Camera feed</strong> — If you enable the camera, video frames are processed in your browser for expression estimation and experimental breathing and heart-rate estimates. We do not transmit or store frames ourselves, and we do not operate a server that could receive them. See the verification note below for the limits of what we can currently prove about our third-party dependencies.</span>
               </div>
               <div className="flex items-start gap-3">
                 <span style={{ color: '#67E8D4' }}>·</span>
@@ -54,24 +56,30 @@ export default function PrivacyPage() {
             </div>
           </section>
 
-          <section className="p-8 rounded-2xl border" style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}>
-            <h2 className="text-2xl font-semibold mb-4">What never leaves your device</h2>
-            <div className="space-y-3" style={{ color: '#A9BAB8' }}>
-              <div className="flex items-start gap-3">
-                <span style={{ color: '#FF7A85' }}>×</span>
-                <span>Camera or video data</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <span style={{ color: '#FF7A85' }}>×</span>
-                <span>Physiological signals (heart rate, breathing rate)</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <span style={{ color: '#FF7A85' }}>×</span>
-                <span>Expression or emotion estimates</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <span style={{ color: '#FF7A85' }}>×</span>
-                <span>Any identifying information</span>
+          <section className="p-8 rounded-2xl border" style={{ backgroundColor: '#10242B', borderColor: '#F4B86A40' }}>
+            <div className="flex items-start gap-3">
+              <span className="text-xl leading-none" style={{ color: '#F4B86A' }}>⚠</span>
+              <div>
+                <h2 className="text-2xl font-semibold mb-4">On-device processing: designed, not yet verified</h2>
+                <p className="mb-3" style={{ color: '#A9BAB8' }}>
+                  EMOCEAN is <strong className="text-white">designed</strong> so that camera frames,
+                  physiological estimates and expression estimates are computed in your browser and
+                  never sent anywhere. We have written no code that uploads them, and we run no
+                  server that could receive them.
+                </p>
+                <p className="mb-3" style={{ color: '#A9BAB8' }}>
+                  An earlier version of this page stated flatly that these things never leave your
+                  device. We have removed that wording, because we had not actually verified it. The
+                  Lab uses a third-party camera-sensing library, and some libraries in this category
+                  offer an optional cloud API. Until we have audited its network behaviour ourselves,
+                  an absolute guarantee is more than we can honestly make.
+                </p>
+                <p style={{ color: '#A9BAB8' }}>
+                  <strong className="text-white">What we are doing about it:</strong> we are capturing
+                  a full network trace of a live camera session and will publish it, along with the
+                  result, on this page. If anything turns out to leave the browser, we will say so
+                  plainly and either put it behind explicit consent or remove it.
+                </p>
               </div>
             </div>
           </section>
@@ -92,7 +100,7 @@ export default function PrivacyPage() {
               </li>
               <li className="flex items-start gap-3">
                 <span style={{ color: '#67E8D4' }}>·</span>
-                <span><strong className="text-white">Revocable</strong> — You can withdraw your data at any time.</span>
+                <span><strong className="text-white">Revocable</strong> — You can withdraw at any time, and withdrawal means deletion. See <em>Data retention</em> below for exactly what that does and does not reach.</span>
               </li>
             </ul>
           </section>
@@ -100,7 +108,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">Third-party services</h2>
             <p className="mb-3" style={{ color: '#A9BAB8' }}>
-              EMOCEAN is hosted on Vercel. Vercel collects standard access logs (IP addresses, user agents, request timestamps) for infrastructure operation. These logs are subject to <a href="https://vercel.com/legal/privacy-policy" className="underline" style={{ color: '#67E8D4' }}>Vercel's privacy policy</a>.
+              EMOCEAN is hosted on Vercel. Vercel collects standard access logs (IP addresses, user agents, request timestamps) for infrastructure operation. These logs are subject to <a href="https://vercel.com/legal/privacy-policy" className="underline" style={{ color: '#67E8D4' }}>Vercel&rsquo;s privacy policy</a>.
             </p>
             <p style={{ color: '#A9BAB8' }}>
               No analytics, advertising, or tracking scripts are included in the application itself.
@@ -110,7 +118,19 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">Data retention</h2>
             <p className="mb-3" style={{ color: '#A9BAB8' }}>
-              Your session data is stored in your browser's local storage. Clearing your browser data clears EMOCEAN data. Server-side research contributions are retained indefinitely unless you request deletion.
+              Your session data is stored in your browser&rsquo;s own storage. Clearing your browser data
+              clears your EMOCEAN data. We cannot read it and we cannot recover it for you.
+            </p>
+            <p className="mb-3" style={{ color: '#A9BAB8' }}>
+              If you opt in to contribute a session to research, that contribution is held until you
+              withdraw it. Withdrawal deletes it — we do not keep a copy. We aim to action deletion
+              requests within thirty days of receiving them.
+            </p>
+            <p style={{ color: '#A9BAB8' }}>
+              The one thing withdrawal cannot reach is analysis already published before you withdrew.
+              If a contribution has already been aggregated into a published result, that result stays
+              published; we cannot retract a number from a document that is already in the world. No
+              such analysis has been published to date.
             </p>
           </section>
 

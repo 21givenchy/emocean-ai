@@ -94,7 +94,7 @@ export default function HomePage() {
             <div className="flex items-center gap-4 text-xs" style={{ color: '#A9BAB8' }}>
               <span>3–5 min</span>
               <span>·</span>
-              <span>Webcam, wearable, or guided mode</span>
+              <span>Webcam or guided mode</span>
             </div>
           </Link>
         </div>

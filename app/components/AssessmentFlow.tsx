@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { VisualMode, VisualTokens, defaultTokens, modeMeta } from '@/app/lib/designTokens';
 import {
   AssessmentMode,
@@ -54,9 +54,23 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
 }) => {
   const [protocol] = useState(() => generateProtocol(assessmentMode));
   const [trialIndex, setTrialIndex] = useState(0);
-  const [results, setResults] = useState<TrialResult[]>([]);
-  const [phase, setPhase] = useState<'washout' | 'task' | 'selfreport'>('washout');
-  const [selfReportRating, setSelfReportRating] = useState<number | null>(null);
+  const [phase, setPhase] = useState<'washout' | 'task' | 'selfreport' | 'finishing'>('washout');
+
+  /**
+   * Callbacks handed to task components must not close over stale state.
+   *
+   * The previous implementation memoised `handleSelfReport` with an empty
+   * dependency array, so it captured render-1's `advanceTrial`, which captured
+   * `trialIndex === 0`. The terminal branch (`trialIndex === totalTrials - 1`)
+   * was therefore never reachable: the assessment ran past its last trial and
+   * crashed reading `protocol.trials[trialIndex].taskId` on the next render.
+   * Only users who skipped every trial ever reached the results page.
+   *
+   * These refs are the source of truth for the callbacks; the useState values
+   * remain the source of truth for rendering.
+   */
+  const resultsRef = useRef<TrialResult[]>([]);
+  const trialIndexRef = useRef(0);
 
   // Preload task content
   const readingPassages = useMemo(() => getReadingPassages(12), []);
@@ -67,11 +81,12 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
   const totalTrials = protocol.trials.length;
   const progress = ((trialIndex + 1) / totalTrials) * 100;
 
-  // Map trial to task content
+  // Map trial to task content. Optional chaining is deliberate: `trialIndex`
+  // can momentarily sit one past the end while the completion handoff runs.
   const readingIndex = useMemo(() => {
     let count = 0;
     for (let i = 0; i <= trialIndex; i++) {
-      if (protocol.trials[i].taskId === 'reading') count++;
+      if (protocol.trials[i]?.taskId === 'reading') count++;
     }
     return count - 1;
   }, [trialIndex, protocol]);
@@ -79,7 +94,7 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
   const searchIndex = useMemo(() => {
     let count = 0;
     for (let i = 0; i <= trialIndex; i++) {
-      if (protocol.trials[i].taskId === 'search') count++;
+      if (protocol.trials[i]?.taskId === 'search') count++;
     }
     return count - 1;
   }, [trialIndex, protocol]);
@@ -87,7 +102,7 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
   const chatIndex = useMemo(() => {
     let count = 0;
     for (let i = 0; i <= trialIndex; i++) {
-      if (protocol.trials[i].taskId === 'chat') count++;
+      if (protocol.trials[i]?.taskId === 'chat') count++;
     }
     return count - 1;
   }, [trialIndex, protocol]);
@@ -113,11 +128,63 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
     return factor?.label || '';
   }, [currentTrial]);
 
+  /**
+   * Append a result. Held in a ref rather than state: nothing renders the list,
+   * and every caller already triggers a re-render via `phase` / `trialIndex`.
+   */
+  const commitResult = useCallback((result: TrialResult) => {
+    resultsRef.current = [...resultsRef.current, result];
+  }, []);
+
+  /**
+   * Score and hand off. Reads `resultsRef`, not the `results` closure, so the
+   * final trial is included — the old implementation scored a snapshot taken
+   * before the last result was appended and silently dropped it.
+   */
+  const finishAssessment = useCallback(() => {
+    const allResults = resultsRef.current;
+    const score = scoreAssessment(allResults);
+
+    let bestTokens = defaultTokens[mode];
+    for (const fs of score.factorScores) {
+      const factor = FACTORS.find((f) => f.id === fs.factorId);
+      const variant = factor?.variants.find((v) => v.id === fs.bestVariantId);
+      if (variant) bestTokens = variant.apply(bestTokens);
+    }
+
+    onComplete({
+      mode,
+      assessmentMode,
+      score,
+      tokens: bestTokens,
+      results: allResults,
+    });
+  }, [mode, assessmentMode, onComplete]);
+
+  /**
+   * Advance or finish. Declared before its callers, and derives the terminal
+   * condition from `trialIndexRef` rather than a captured `trialIndex`, so it
+   * stays correct however it was memoised. No side effects inside a state
+   * updater: those run twice under StrictMode.
+   */
+  const advanceTrial = useCallback(() => {
+    const next = trialIndexRef.current + 1;
+
+    if (next < totalTrials) {
+      trialIndexRef.current = next;
+      setTrialIndex(next);
+      setPhase('washout');
+    } else {
+      setPhase('finishing');
+      finishAssessment();
+    }
+  }, [totalTrials, finishAssessment]);
+
   // Handle task completion (from task components)
   const handleTaskComplete = useCallback(
     (metrics: TaskMetrics) => {
       if (!currentTrial) return;
-      const result: TrialResult = {
+      commitResult({
         trialId: currentTrial.id,
         factorId: currentTrial.factorId,
         variantId: currentTrial.variantId,
@@ -127,18 +194,16 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
         taskMetrics: metrics,
         selfReport: null,
         timestamp: Date.now(),
-      };
-      setResults((prev) => [...prev, result]);
+      });
       setPhase('selfreport');
-      setSelfReportRating(null);
     },
-    [currentTrial]
+    [currentTrial, commitResult]
   );
 
-  // Handle skip
+  // Handle skip — a skipped trial is missing data, not a zero score.
   const handleSkip = useCallback(() => {
     if (!currentTrial) return;
-    const result: TrialResult = {
+    commitResult({
       trialId: currentTrial.id,
       factorId: currentTrial.factorId,
       variantId: currentTrial.variantId,
@@ -148,51 +213,25 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
       taskMetrics: null,
       selfReport: null,
       timestamp: Date.now(),
-    };
-    setResults((prev) => [...prev, result]);
+    });
     advanceTrial();
-  }, [currentTrial, results]);
+  }, [currentTrial, commitResult, advanceTrial]);
 
   // Handle self-report submit
   const handleSelfReport = useCallback(
     (rating: number) => {
-      setResults((prev) => {
-        const updated = [...prev];
-        const last = updated[updated.length - 1];
-        if (last) last.selfReport = rating;
-        return updated;
-      });
-      setSelfReportRating(rating);
+      // Replace the last result immutably; the old code mutated an object that
+      // was already in state, which is unreliable under StrictMode.
+      const updated = [...resultsRef.current];
+      const lastIndex = updated.length - 1;
+      if (lastIndex >= 0) {
+        updated[lastIndex] = { ...updated[lastIndex], selfReport: rating };
+        resultsRef.current = updated;
+      }
       advanceTrial();
     },
-    []
+    [advanceTrial]
   );
-
-  // Advance to next trial or complete
-  const advanceTrial = useCallback(() => {
-    if (trialIndex < totalTrials - 1) {
-      setTrialIndex((prev) => prev + 1);
-      setPhase('washout');
-    } else {
-      // Score and complete
-      const allResults = [...results];
-      const score = scoreAssessment(allResults);
-      // Apply best tokens
-      let bestTokens = defaultTokens[mode];
-      for (const fs of score.factorScores) {
-        const factor = FACTORS.find((f) => f.id === fs.factorId);
-        const variant = factor?.variants.find((v) => v.id === fs.bestVariantId);
-        if (variant) bestTokens = variant.apply(bestTokens);
-      }
-      onComplete({
-        mode,
-        assessmentMode,
-        score,
-        tokens: bestTokens,
-        results: allResults,
-      });
-    }
-  }, [trialIndex, totalTrials, results, mode, assessmentMode, onComplete]);
 
   // Current factor number
   const currentFactorNum = useMemo(() => {
@@ -202,7 +241,28 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
 
   const totalFactors = protocol.factorOrder.length;
 
-  if (!currentTrial) return null;
+  /**
+   * Reached when every trial is done and we are handing off to the results
+   * page, or if a protocol ever runs short. Renders a visible state rather than
+   * `null`, which would leave a blank page with no way forward.
+   */
+  if (!currentTrial || phase === 'finishing') {
+    return (
+      <div
+        className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center"
+        style={{ backgroundColor: '#071318', color: '#F5F7F2' }}
+      >
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+          style={{ borderColor: '#67E8D4', borderTopColor: 'transparent' }}
+        />
+        <p style={{ color: '#A9BAB8' }}>Scoring your session…</p>
+        <button onClick={onBack} className="mt-4 text-sm underline" style={{ color: '#A9BAB8' }}>
+          Cancel and go back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div

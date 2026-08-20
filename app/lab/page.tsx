@@ -57,7 +57,7 @@ export default function LabPage() {
                 <div className="flex items-center gap-4 text-sm" style={{ color: '#A9BAB8' }}>
                   <span>3–5 min</span>
                   <span>·</span>
-                  <span>Webcam, wearable, or guided mode</span>
+                  <span>Webcam or guided mode</span>
                 </div>
               </div>
               <svg className="w-6 h-6 shrink-0 mt-2" fill="none" stroke="#A9BAB8" viewBox="0 0 24 24">

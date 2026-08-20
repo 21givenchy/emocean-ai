@@ -42,10 +42,10 @@ export default function ResearchPage() {
               Slow, controlled breathing at roughly 6 breaths per minute has been shown to increase heart-rate variability and improve subjective calm in laboratory settings. Our Breathe the World Open experience applies this principle: as your breathing pattern stabilizes, the virtual environment responds.
             </p>
             <p className="mb-3" style={{ color: '#A9BAB8' }}>
-              <strong className="text-white">What we can claim:</strong> Respiratory entrainment is a well-documented phenomenon (Lehrer &amp; Gevirtz, 2014). Real-time breathing measurement via webcam or wearable provides a reasonable proxy for paced breathing.
+              <strong className="text-white">What we can claim:</strong> Respiratory entrainment is a well-documented phenomenon (Lehrer &amp; Gevirtz, 2014). Guided paced breathing, where the pacing comes from the interface rather than from a sensor, rests on that published work.
             </p>
             <p style={{ color: '#A9BAB8' }}>
-              <strong className="text-white">What we cannot claim:</strong> That webcam-derived breathing rates are as accurate as medical-grade plethysmography, or that short sessions produce lasting clinical outcomes.
+              <strong className="text-white">What we cannot claim:</strong> That our webcam-derived breathing estimate is accurate. We have not compared it against a reference instrument, so we do not know its error — see <Link href="/validation" className="underline" style={{ color: '#67E8D4' }}>Validation</Link>. We also cannot claim it approaches medical-grade plethysmography, or that short sessions produce lasting clinical outcomes.
             </p>
           </section>
 
@@ -55,7 +55,25 @@ export default function ResearchPage() {
               Research in affective computing suggests that physiological signals—heart rate, heart-rate variability, skin conductance—carry information about arousal and attention. Several studies have explored using these signals to adapt digital interfaces (e.g., adjusting contrast, spacing, or notification frequency).
             </p>
             <p className="mb-3" style={{ color: '#A9BAB8' }}>
-              <strong className="text-white">Our approach:</strong> Find My Interface pairs self-report and task performance with optional physiology. Physiology never overrides your stated preference; it adds context to the assessment.
+              <strong className="text-white">Our approach:</strong> Find My Interface produces three
+              kinds of result, and they are not interchangeable. Measured task performance is what
+              actually happened. Stated preference is what you said you liked. Optional physiology is
+              context only — it never overrules either of the other two. Where preference and measured
+              performance disagree, we show you the disagreement rather than quietly resolving it.
+            </p>
+            <p className="mb-3" style={{ color: '#A9BAB8' }}>
+              <strong className="text-white">Why performance is the protected result:</strong> people
+              do not reliably prefer the interfaces they perform best with. Reading speed and stated
+              preference frequently point in different directions. So a result that lets a
+              well-liked-but-slower option win, and then reports it as a measurement, is not a
+              measurement.
+            </p>
+            <p className="mb-3 p-4 rounded-xl text-sm" style={{ color: '#F4B86A', backgroundColor: '#F4B86A10' }}>
+              <strong>Current implementation gap:</strong> the sessions running in the Lab today still
+              score variants by combining task performance and self-report into a single number, which
+              is the thing this section argues against. Separating the three results is the next change
+              to the assessment engine. Until it ships, treat a session&rsquo;s recommended variant as a
+              blended preference signal, not a performance measurement.
             </p>
             <p style={{ color: '#A9BAB8' }}>
               <strong className="text-white">Open question:</strong> Whether webcam-derived heart rate is reliable enough for meaningful adaptation remains an active area of research. We publish our methodology and encourage independent validation.
@@ -75,7 +93,7 @@ export default function ResearchPage() {
               </li>
               <li className="flex items-start gap-3">
                 <span style={{ color: '#67E8D4' }}>·</span>
-                <span>A surveillance tool. All processing happens locally unless you explicitly opt in to a research study.</span>
+                <span>A surveillance tool. Camera processing is designed to run on your device, and we only ask for research data if you explicitly opt in. We are currently auditing our dependencies to verify that no camera-derived data leaves the browser, and will publish the result — see <Link href="/privacy" className="underline" style={{ color: '#67E8D4' }}>Privacy</Link>.</span>
               </li>
             </ul>
           </section>
@@ -85,8 +103,16 @@ export default function ResearchPage() {
             <div className="space-y-3 text-sm" style={{ color: '#A9BAB8' }}>
               <p>Lehrer, P. M., &amp; Gevirtz, R. (2014). Heart rate variability biofeedback: How and why does it work? <em>Frontiers in Psychology</em>, 5, 756.</p>
               <p>Picard, R. W. (2000). <em>Affective Computing</em>. MIT Press.</p>
-              <p>Rickles, D., et al. (2024). Bioadaptive interfaces: A review of physiological signal-driven interaction techniques. <em>ACM Computing Surveys</em>.</p>
-              <p>van der Schaar, P. J., et al. (2023). Webcam-based photoplethysmography for heart rate estimation during cognitive tasks. <em>IEEE Access</em>.</p>
+              <p>Bujić, M., &amp; Hamari, J. (2026). SYNAPSE: A sociotechnical taxonomy of bioadaptive media. <em>CHI &rsquo;26</em>. doi:10.1145/3772318.3790860</p>
+              {/*
+                Two references previously listed here — attributed to
+                "Rickles, D., et al. (2024), ACM Computing Surveys" and
+                "van der Schaar, P. J., et al. (2023), IEEE Access" — were removed
+                on 2026-08-20. Neither could be located in ACM DL, IEEE Xplore, or
+                any other index, and both appear to have been fabricated.
+                Do not reinstate them. Replacements must come from the verified
+                Evidence Index with resolvable DOIs.
+              */}
             </div>
           </section>
         </div>
