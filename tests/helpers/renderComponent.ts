@@ -11,7 +11,7 @@
  */
 
 import { build } from 'esbuild';
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -25,7 +25,9 @@ export function loadTsx(entry: string): Promise<Record<string, unknown>> {
     // Deliberately inside the project, not the OS temp dir: `react` is kept
     // external so the test and the bundle share one React instance, and a
     // bundle in /tmp cannot resolve it (no node_modules above it).
-    const dir = await mkdtemp(join(process.cwd(), 'node_modules', '.cache', 'emocean-test-'));
+    const cacheDir = join(process.cwd(), 'node_modules', '.cache');
+    await mkdir(cacheDir, { recursive: true });
+    const dir = await mkdtemp(join(cacheDir, 'emocean-test-'));
     const outfile = join(dir, 'bundle.mjs');
     await build({
       entryPoints: [entry],
