@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface GuidedBreathingProps {
-  onBreathRate?: (bpm: number) => void;
+  onBreathRate?: (bpm: number | null) => void;
   onQuality?: (quality: number) => void;
 }
 
@@ -16,7 +16,6 @@ export const GuidedBreathing: React.FC<GuidedBreathingProps> = ({ onBreathRate, 
   const [phase, setPhase] = useState<'inhale' | 'exhale'>('inhale');
   const [progress, setProgress] = useState(0);
   const [cycleCount, setCycleCount] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
   const startTimeRef = useRef<number>(0);
   const animFrameRef = useRef<number>(0);
 
@@ -47,27 +46,14 @@ export const GuidedBreathing: React.FC<GuidedBreathingProps> = ({ onBreathRate, 
   }, [cycleCount, onBreathRate, onQuality]);
 
   useEffect(() => {
-    if (isRunning) {
-      startTimeRef.current = Date.now();
-      animFrameRef.current = requestAnimationFrame(tick);
-    }
+    // Start the animation loop as soon as this component mounts. No second button.
+    startTimeRef.current = Date.now();
+    setCycleCount(0);
+    animFrameRef.current = requestAnimationFrame(tick);
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [isRunning, tick]);
-
-  const handleStart = () => {
-    setIsRunning(true);
-    setCycleCount(0);
-    startTimeRef.current = Date.now();
-  };
-
-  const handleStop = () => {
-    setIsRunning(false);
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    onBreathRate?.(null as any);
-    onQuality?.(0);
-  };
+  }, [tick]);
 
   // Circle size based on phase
   const circleScale = phase === 'inhale' ? 1 + progress * 0.5 : 1.5 - progress * 0.5;
@@ -96,60 +82,33 @@ export const GuidedBreathing: React.FC<GuidedBreathingProps> = ({ onBreathRate, 
           />
           {/* Phase text */}
           <text x="100" y="95" textAnchor="middle" fill="#F5F7F2" fontSize="14" fontWeight="500">
-            {isRunning ? (phase === 'inhale' ? 'Breathe in' : 'Breathe out') : 'Ready'}
+            {phase === 'inhale' ? 'Breathe in' : 'Breathe out'}
           </text>
           <text x="100" y="115" textAnchor="middle" fill="#A9BAB8" fontSize="12">
-            {isRunning
-              ? phase === 'inhale'
-                ? `${Math.ceil(INHALE_SEC * (1 - progress))}s`
-                : `${Math.ceil(EXHALE_SEC * (1 - progress))}s`
-              : 'Press start'}
+            {phase === 'inhale'
+              ? `${Math.ceil(INHALE_SEC * (1 - progress))}s`
+              : `${Math.ceil(EXHALE_SEC * (1 - progress))}s`}
           </text>
         </svg>
       </div>
 
-      {/* Controls */}
-      <div className="flex gap-3">
-        {!isRunning ? (
-          <button
-            onClick={handleStart}
-            className="px-8 py-3 rounded-xl font-medium transition-colors"
-            style={{ backgroundColor: '#67E8D4', color: '#071318' }}
-          >
-            Start guided breathing
-          </button>
-        ) : (
-          <button
-            onClick={handleStop}
-            className="px-8 py-3 rounded-xl font-medium border transition-colors"
-            style={{ borderColor: 'rgba(245,247,242,.12)', color: '#F5F7F2' }}
-          >
-            Stop
-          </button>
-        )}
+      {/* Stats — visible immediately, no "Start" button needed */}
+      <div className="mt-6 text-center">
+        <p className="text-sm" style={{ color: '#A9BAB8' }}>
+          Cycle {cycleCount + 1} · {TARGET_BPM} breaths/min target
+        </p>
+        <p className="text-xs mt-1" style={{ color: '#A9BAB8' }}>
+          {INHALE_SEC}s in · {EXHALE_SEC}s out
+        </p>
       </div>
 
-      {/* Stats */}
-      {isRunning && (
-        <div className="mt-6 text-center">
-          <p className="text-sm" style={{ color: '#A9BAB8' }}>
-            Cycle {cycleCount + 1} · {TARGET_BPM} breaths/min target
-          </p>
-          <p className="text-xs mt-1" style={{ color: '#A9BAB8' }}>
-            {INHALE_SEC}s in · {EXHALE_SEC}s out
-          </p>
-        </div>
-      )}
-
       {/* Instructions */}
-      {!isRunning && (
-        <div className="mt-8 max-w-sm text-center">
-          <p className="text-sm" style={{ color: '#A9BAB8' }}>
-            Follow the expanding and contracting circle. Breathe in as it grows, breathe out as it shrinks.
-            No camera required.
-          </p>
-        </div>
-      )}
+      <div className="mt-8 max-w-sm text-center">
+        <p className="text-sm" style={{ color: '#A9BAB8' }}>
+          Follow the expanding and contracting circle. Breathe in as it grows, breathe out as it shrinks.
+          No camera required.
+        </p>
+      </div>
     </div>
   );
 };

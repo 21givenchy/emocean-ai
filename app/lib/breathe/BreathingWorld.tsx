@@ -7,9 +7,10 @@ interface BreathingWorldProps {
   state: WorldState;
   breathRate: number | null;
   isFrozen: boolean;
+  inputMode?: 'camera' | 'guided';
 }
 
-export const BreathingWorld: React.FC<BreathingWorldProps> = ({ state, breathRate, isFrozen }) => {
+export const BreathingWorld: React.FC<BreathingWorldProps> = ({ state, breathRate, isFrozen, inputMode }) => {
   // Cloud positions (deterministic based on count)
   const clouds = useMemo(() => {
     return Array.from({ length: Math.min(state.clouds.count, 8) }, (_, i) => ({
@@ -141,13 +142,15 @@ export const BreathingWorld: React.FC<BreathingWorldProps> = ({ state, breathRat
         </div>
       )}
 
-      {/* State label */}
+      {/* State label + metrics */}
       <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-xl text-sm font-medium"
         style={{ backgroundColor: 'rgba(0,0,0,0.5)', color: '#F5F7F2' }}>
         {state.label}
-        {breathRate !== null && (
+        {inputMode === 'guided' ? (
+          <span className="ml-2 opacity-70">Guide pace: 6 breaths/min</span>
+        ) : breathRate !== null ? (
           <span className="ml-2 opacity-70">{breathRate.toFixed(1)} bpm</span>
-        )}
+        ) : null}
       </div>
     </div>
   );

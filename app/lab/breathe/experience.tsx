@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useSensorHub } from '@/app/hooks/useSensorHub';
 import { BreathingWorld } from '@/app/lib/breathe/BreathingWorld';
 import { GuidedBreathing } from '@/app/lib/breathe/GuidedBreathing';
+import { FramingGuide } from '@/app/lab/breathe/FramingGuide';
 import { BreathingStateMachine, WorldState, WORLD_STATES } from '@/app/lib/breathe/stateMachine';
 
 type SessionPhase = 'select' | 'safety' | 'calibrate' | 'tutorial' | 'session' | 'debrief';
@@ -51,10 +52,13 @@ export default function BreatheExperience() {
 
   // Guided mode breathing callback
   const handleGuidedBreathRate = useCallback((bpm: number | null) => {
-    setBreathRate(bpm);
+    // In guided mode, we know the target pace (6 bpm) but don't measure actual breathing.
+    // Never expose bpm as measured data (that would violate CLAUDE.md non-negotiable #3:
+    // "no number without provenance"). The breathing world receives 6 bpm as the
+    // guide pace for simulation purposes only. The badge shows "Guide pace:" static text.
     const q = bpm !== null ? 0.8 : 0;
     setQuality(q);
-    setWorldState(stateMachineRef.current.update(bpm, q));
+    setWorldState(stateMachineRef.current.update(6, q));
   }, []);
 
   const handleGuidedQuality = useCallback((q: number) => {
@@ -198,6 +202,7 @@ export default function BreatheExperience() {
           playsInline
           className="h-full w-full -scale-x-100 object-cover"
         />
+        <FramingGuide visible={previewMode === 'calibrate'} />
         {previewMode !== 'hidden' && needsResume && (
           <button
             onClick={resume}
@@ -484,7 +489,7 @@ export default function BreatheExperience() {
         </div>
 
         <div className="flex flex-1 items-center justify-center px-6 py-4">
-          <BreathingWorld state={worldState} breathRate={breathRate} isFrozen={isFrozen} />
+          <BreathingWorld state={worldState} breathRate={breathRate} isFrozen={isFrozen} inputMode={inputMode} />
         </div>
 
         <div className="mx-auto w-full max-w-6xl px-6 py-6">
