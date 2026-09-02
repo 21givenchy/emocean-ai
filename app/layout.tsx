@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { ROUTES, SITE_NAME, SITE_URL } from './lib/site';
 import './globals.css';
@@ -35,6 +35,17 @@ export const metadata: Metadata = {
     description: home.description,
   },
   robots: { index: true, follow: true },
+};
+
+/**
+ * `viewportFit: 'cover'` is what makes `env(safe-area-inset-*)` resolve to
+ * real values. Without it the assessment's safe-area padding is always 0 and
+ * content can sit under the notch or home indicator.
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

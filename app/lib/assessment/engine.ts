@@ -52,7 +52,11 @@ export const FACTORS: Factor[] = [
     id: 'spacing',
     label: 'Spacing',
     description: 'Padding and margins',
-    task: 'chat',
+    // Measured on a reading task, not a chat-reply task. Spacing affects how
+    // easily a block of text is scanned, which a comprehension question can
+    // actually detect; a free-text reply cannot be scored for correctness and
+    // raises the mobile keyboard over the thread.
+    task: 'reading',
     variants: [
       {
         id: 'space-tight',
@@ -98,6 +102,11 @@ export const FACTORS: Factor[] = [
         id: 'contrast-high',
         label: 'High contrast',
         description: 'Sharp, crisp text',
+        // Bubble colours move with the contrast level too. Changing only
+        // `canvas`/`surface` left the message bubbles identical across all
+        // three variants, so in a chat layout the manipulation was barely
+        // visible — the participant saw the same bubbles on a slightly
+        // different backdrop.
         apply: (t) => ({
           ...t,
           color: {
@@ -106,6 +115,8 @@ export const FACTORS: Factor[] = [
             textSecondary: '#D1D5DB',
             canvas: '#000000',
             surface: '#111111',
+            incomingBubble: '#1C1C1C',
+            incomingBubbleText: '#FFFFFF',
           },
         }),
       },
@@ -121,6 +132,8 @@ export const FACTORS: Factor[] = [
             textSecondary: '#A9BAB8',
             canvas: '#071318',
             surface: '#10242B',
+            incomingBubble: '#1A3040',
+            incomingBubbleText: '#F5F7F2',
           },
         }),
       },
@@ -136,6 +149,8 @@ export const FACTORS: Factor[] = [
             textSecondary: '#8A9A98',
             canvas: '#0A1A22',
             surface: '#122630',
+            incomingBubble: '#1B3038',
+            incomingBubbleText: '#C8CCC8',
           },
         }),
       },

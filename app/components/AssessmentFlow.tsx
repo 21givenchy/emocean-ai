@@ -25,6 +25,8 @@ import {
   getSearchItems,
   getChatPrompts,
 } from '@/app/lib/assessment/tasks';
+import { VisualTokensProvider } from '@/app/lib/assessment/VisualTokensContext';
+import { TrialBubbleExchange } from '@/app/components/assessment/TrialBubbleExchange';
 
 // ── Props ───────────────────────────────────────────────────────────
 
@@ -218,6 +220,31 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
     advanceTrial();
   }, [currentTrial, commitResult, advanceTrial]);
 
+  /**
+   * A trial in the chat thread returns both measurements at once: the answer
+   * tap and the feeling tap. Committing them together removes the separate
+   * `'selfreport'` phase, which is what previously doubled the number of
+   * full-screen steps in a session.
+   */
+  const handleExchangeComplete = useCallback(
+    (metrics: TaskMetrics, selfReport: number) => {
+      if (!currentTrial) return;
+      commitResult({
+        trialId: currentTrial.id,
+        factorId: currentTrial.factorId,
+        variantId: currentTrial.variantId,
+        taskId: currentTrial.taskId,
+        repeatIndex: currentTrial.repeatIndex,
+        skipped: false,
+        taskMetrics: metrics,
+        selfReport,
+        timestamp: Date.now(),
+      });
+      advanceTrial();
+    },
+    [currentTrial, commitResult, advanceTrial],
+  );
+
   // Handle self-report submit
   const handleSelfReport = useCallback(
     (rating: number) => {
@@ -266,9 +293,26 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
   }
 
   return (
+    <VisualTokensProvider tokens={currentTokens}>
+      {/*
+        Fixed full-bleed backdrop. `min-h-dvh` alone leaves iOS Safari showing
+        the default page background behind the content when the URL bar
+        collapses, so the canvas colour is painted by a fixed layer underneath
+        rather than only on the scrolling wrapper.
+      */}
+      <div
+        aria-hidden
+        className="fixed inset-0 -z-10 transition-colors duration-500"
+        style={{ backgroundColor: currentTokens.color.canvas }}
+      />
     <div
-      className="min-h-screen transition-colors duration-500"
-      style={{ backgroundColor: currentTokens.color.canvas, color: currentTokens.color.textPrimary }}
+      className="min-h-dvh transition-colors duration-500"
+      style={{
+        backgroundColor: currentTokens.color.canvas,
+        color: currentTokens.color.textPrimary,
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
     >
       {/* Nav */}
       <nav
@@ -319,12 +363,14 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
           </div>
         )}
 
-        {/* Task phase */}
+        {/* Task phase — one bubble exchange per trial. */}
         {phase === 'task' && currentTrial.taskId === 'reading' && (
-          <ReadingTask
+          <TrialBubbleExchange
+            // Remounts per trial so answer/feeling state never leaks forward.
+            key={currentTrial.id}
+            trialKey={currentTrial.id}
             passage={readingPassages[readingIndex % readingPassages.length]}
-            tokens={currentTokens}
-            onComplete={handleTaskComplete}
+            onComplete={handleExchangeComplete}
             onSkip={handleSkip}
           />
         )}
@@ -347,7 +393,11 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
           />
         )}
 
-        {/* Self-report phase */}
+        {/*
+          Self-report phase. Reading trials now collect the feeling check
+          inline as the last tap of their bubble exchange, so this only runs
+          for the search/chat tasks still used by Deep mode.
+        */}
         {phase === 'selfreport' && (
           <SelfReportPhase
             tokens={currentTokens}
@@ -357,6 +407,7 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
         )}
       </div>
     </div>
+    </VisualTokensProvider>
   );
 };
 
