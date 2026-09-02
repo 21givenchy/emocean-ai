@@ -218,6 +218,7 @@ export interface Protocol {
   mode: AssessmentMode;
   trials: Trial[];
   factorOrder: FactorType[];
+  seed: number;
 }
 
 export interface TrialResult {
@@ -260,17 +261,39 @@ export interface ChatMetrics {
 
 // ── Protocol generator ──────────────────────────────────────────────
 
-function shuffleArray<T>(arr: T[]): T[] {
+// Seeded PRNG for reproducible protocol order. Seed is stored in result
+// payload, allowing replays of the same assessment order on demand.
+function mulberry32(a: number) {
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleArray<T>(arr: T[], rng: () => number): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
 }
 
-export function generateProtocol(mode: AssessmentMode): Protocol {
-  const factorOrder = shuffleArray(FACTORS.map((f) => f.id));
+export function generateProtocol(mode: AssessmentMode, seed?: number): Protocol {
+  // Generate a random seed if not provided, store it so the assessment is
+  // reproducible if the user exports their results.
+  const actualSeed = seed ?? Math.floor(Math.random() * 2147483647);
+  const rng = mulberry32(actualSeed);
+
+  const quickFactorIds: FactorType[] = ['typography', 'spacing', 'contrast'];
+  const modesFactors = mode === 'quick' ? quickFactorIds : FACTORS.map((f) => f.id);
+  const factorOrder = shuffleArray(
+    modesFactors.filter((id) => FACTORS.find((f) => f.id === id)),
+    rng,
+  );
   const trials: Trial[] = [];
 
   const repeats = mode === 'quick' ? 1 : 2;
@@ -278,7 +301,10 @@ export function generateProtocol(mode: AssessmentMode): Protocol {
   factorOrder.forEach((factorId) => {
     const factor = FACTORS.find((f) => f.id === factorId)!;
     for (let r = 0; r < repeats; r++) {
-      const variantOrder = shuffleArray(factor.variants.map((v) => v.id));
+      const variantOrder = shuffleArray(
+        factor.variants.map((v) => v.id),
+        rng,
+      );
       variantOrder.forEach((variantId, variantIndex) => {
         trials.push({
           id: `${factorId}-${variantId}-r${r}`,
@@ -292,7 +318,7 @@ export function generateProtocol(mode: AssessmentMode): Protocol {
     }
   });
 
-  return { mode, trials, factorOrder };
+  return { mode, trials, factorOrder, seed: actualSeed };
 }
 
 // ── Token application ───────────────────────────────────────────────
