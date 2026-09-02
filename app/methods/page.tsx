@@ -201,7 +201,7 @@ export default function MethodsPage() {
           <div className="space-y-3 text-sm" style={{ color: '#A9BAB8' }}>
             <div className="flex items-start gap-3">
               <span className="font-mono" style={{ color: '#67E8D4' }}>v1.0.0</span>
-              <span>Initial release — August 2026. Six-factor assessment, chest-motion breathing adapter, validation study results.</span>
+              <span>Initial release — August 2026. Six declared assessment factors, chest-motion breathing adapter. No validation study has been run; an earlier version of this entry said otherwise, which was wrong.</span>
             </div>
           </div>
         </div>

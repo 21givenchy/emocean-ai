@@ -2,9 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { CameraFeed } from '@/app/components/CameraFeed';
 
 export default function SensorsPage() {
+  // Developer-only diagnostic. It exposes raw adapter output and unvalidated
+  // estimates, so it is not part of the public product: outside development the
+  // route does not exist. It is also absent from /lab's navigation.
+  if (process.env.NODE_ENV !== 'development') notFound();
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#071318', color: '#F5F7F2' }}>
       <nav className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">

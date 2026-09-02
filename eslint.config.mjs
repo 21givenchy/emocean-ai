@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Third-party sensor bundles. These are vendored builds, not our source —
+    // linting them yields ~2,000 findings we cannot act on and drowns real ones.
+    "public/vendor/**",
+    "app/lib/sensors/vendor/**",
+    "public/face-api.min.js",
   ]),
 ]);
 

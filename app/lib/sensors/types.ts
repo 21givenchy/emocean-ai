@@ -15,7 +15,6 @@ export type Capability =
   | 'signalQuality'
   | 'prv'
   | 'respiration'
-  | 'facialExpression'
   | 'faceDetection'
   | 'headPose'
   | 'eyeState'
@@ -30,7 +29,6 @@ export const ALL_CAPABILITIES: Capability[] = [
   'signalQuality',
   'prv',
   'respiration',
-  'facialExpression',
   'faceDetection',
   'headPose',
   'eyeState',
@@ -62,11 +60,6 @@ export interface PrvMetrics {
   sdnn: number;
   meanRR: number;
   n: number;
-}
-
-export interface FacialExpressionValue {
-  label: string;
-  scores: Record<string, number>;
 }
 
 export interface FaceDetectionValue {
@@ -122,7 +115,6 @@ export interface SensorSnapshot {
   signalQuality: SensorField<number>;
   prv: SensorField<PrvMetrics>;
   respiration: SensorField<number>;
-  facialExpression: SensorField<FacialExpressionValue>;
   faceDetection: SensorField<FaceDetectionValue>;
   headPose: SensorField<HeadPoseValue>;
   eyeState: SensorField<EyeStateValue>;

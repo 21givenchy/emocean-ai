@@ -43,7 +43,7 @@ export default function PrivacyPage() {
             <div className="space-y-3" style={{ color: '#A9BAB8' }}>
               <div className="flex items-start gap-3">
                 <span style={{ color: '#67E8D4' }}>·</span>
-                <span><strong className="text-white">Camera feed</strong> — If you enable the camera, video frames are processed in your browser for expression estimation and experimental breathing and heart-rate estimates. We do not transmit or store frames ourselves, and we do not operate a server that could receive them. See the verification note below for the limits of what we can currently prove about our third-party dependencies.</span>
+                <span><strong className="text-white">Camera feed</strong> — If you enable the camera, video frames are processed in your browser for experimental breathing and pulse-rate estimates. No expression, emotion or mood inference runs at all; that capability was removed from the sensor pipeline rather than merely hidden. We do not transmit or store frames ourselves, and we do not operate a server that could receive them. See the verification note below for the limits of what we can currently prove about our third-party dependencies.</span>
               </div>
               <div className="flex items-start gap-3">
                 <span style={{ color: '#67E8D4' }}>·</span>
@@ -96,11 +96,11 @@ export default function PrivacyPage() {
               </li>
               <li className="flex items-start gap-3">
                 <span style={{ color: '#67E8D4' }}>·</span>
-                <span><strong className="text-white">De-identified</strong> — No names, emails, or device identifiers are attached.</span>
+                <span><strong className="text-white">De-identified</strong> — No names or emails are attached. Exports carry only a coarse viewport band, your reduced-motion setting, a UTC timestamp and a format version. They previously carried your full user-agent string, exact screen resolution, timezone and language, which together identify a browser; those fields were removed.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span style={{ color: '#67E8D4' }}>·</span>
-                <span><strong className="text-white">Revocable</strong> — You can withdraw at any time, and withdrawal means deletion. See <em>Data retention</em> below for exactly what that does and does not reach.</span>
+                <span><strong className="text-white">Revocable</strong> — You can withdraw at any time. Withdrawal deletes the record from this browser immediately. Because nothing is uploaded, there is no second copy to request the deletion of.</span>
               </li>
             </ul>
           </section>
@@ -108,7 +108,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">Third-party services</h2>
             <p className="mb-3" style={{ color: '#A9BAB8' }}>
-              EMOCEAN is hosted on Vercel. Vercel collects standard access logs (IP addresses, user agents, request timestamps) for infrastructure operation. These logs are subject to <a href="https://vercel.com/legal/privacy-policy" className="underline" style={{ color: '#67E8D4' }}>Vercel&rsquo;s privacy policy</a>.
+              EMOCEAN is hosted on Vercel. Serving the site necessarily means Vercel processes ordinary request metadata — IP addresses, user-agent strings and request timestamps — in its platform logs, as it would for any website. We do not control that and cannot switch it off while hosting there. These logs are subject to <a href="https://vercel.com/legal/privacy-policy" className="underline" style={{ color: '#67E8D4' }}>Vercel&rsquo;s privacy policy</a>.
             </p>
             <p style={{ color: '#A9BAB8' }}>
               No analytics, advertising, or tracking scripts are included in the application itself.
@@ -122,15 +122,15 @@ export default function PrivacyPage() {
               clears your EMOCEAN data. We cannot read it and we cannot recover it for you.
             </p>
             <p className="mb-3" style={{ color: '#A9BAB8' }}>
-              If you opt in to contribute a session to research, that contribution is held until you
-              withdraw it. Withdrawal deletes it — we do not keep a copy. We aim to action deletion
-              requests within thirty days of receiving them.
+              There is currently no way to contribute a session to research, because we operate no
+              server that could receive one. This build has no upload path and no telemetry endpoint.
+              If that changes, this page will describe the actual mechanism before it is switched on —
+              not in advance of it.
             </p>
             <p style={{ color: '#A9BAB8' }}>
-              The one thing withdrawal cannot reach is analysis already published before you withdrew.
-              If a contribution has already been aggregated into a published result, that result stays
-              published; we cannot retract a number from a document that is already in the world. No
-              such analysis has been published to date.
+              What withdrawal cannot reach is your own exported files. If you downloaded an Interface
+              Kit or a session file, that copy is yours and lives outside this browser; deleting your
+              EMOCEAN data does not reach it.
             </p>
           </section>
 

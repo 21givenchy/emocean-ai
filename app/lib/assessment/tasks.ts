@@ -39,7 +39,7 @@ export const READING_PASSAGES: ReadingPassage[] = [
   },
   {
     id: 'r2',
-    title: 'Paper记忆力',
+    title: 'Paper and memory',
     body: 'Researchers tested whether handwriting notes improves memory compared to typing. Participants who wrote by hand recalled 15 percent more details after a one-hour delay. The team concluded that the motor act of forming letters strengthens the memory trace. However, typing speed was not a factor in the results.',
     question: 'According to the passage, what improves memory in the study?',
     answers: [

@@ -16,7 +16,6 @@ export function createVitalCameraAdapter(): SensorAdapter {
     'beatIntervals',
     'signalQuality',
     'prv',
-    'facialExpression',
     'faceDetection',
     'headPose',
     'eyeState',
@@ -53,17 +52,22 @@ export function createVitalCameraAdapter(): SensorAdapter {
 
     let models: Record<string, ArrayBuffer>;
     let faceLandmarkerEnabled = true;
-    let emotionEnabled = true;
+    // Expression inference stays off: there is no validated estimator behind it claim-ok:negated
+    // and the project publishes no-emotion-inference as a promise.
+    const emotionEnabled = false;
     let gazeEnabled = true;
 
     try {
-      models = await BrowserAdapter.loadModels(modelBase);
+      // `emotion: false` is required, not merely tidy: loadModels() defaults it
+      // to true and throws on a non-ok fetch, and the emotion model is no
+      // longer self-hosted (see scripts/copy-sensor-assets.mjs). Omitting this
+      // would send every camera session down the degraded rPPG-only path.
+      models = await BrowserAdapter.loadModels(modelBase, { emotion: false });
     } catch (err) {
-      // Degrade gracefully: retry with only the required rPPG/HRV models
+      // Degrade gracefully: retry with only the required rPPG/HRV models claim-ok:sdk-asset-name
       // so heart rate still works even if optional assets are missing.
       ctx.onError(`optional model load failed, retrying rPPG-only: ${err instanceof Error ? err.message : String(err)}`);
       faceLandmarkerEnabled = false;
-      emotionEnabled = false;
       gazeEnabled = false;
       models = await BrowserAdapter.loadModels(modelBase, {
         emotion: false,
@@ -116,19 +120,6 @@ export function createVitalCameraAdapter(): SensorAdapter {
       ctx.report('prv', { rmssd: data.rmssd, sdnn: data.sdnn as number, meanRR: data.meanRR as number, n: data.n });
     });
 
-    vc.on('emotion', ({ emotion, probs }: { emotion: string; probs: number[] }) => {
-      if (!emotion) {
-        ctx.report('facialExpression', null, { available: false, reason: 'no face detected' });
-        return;
-      }
-      const labels: string[] = (browserAdapter.constructor as any).EMOTION_LABELS ?? [];
-      const scores: Record<string, number> = {};
-      labels.forEach((label, i) => {
-        scores[label] = probs[i] ?? 0;
-      });
-      ctx.report('facialExpression', { label: emotion, scores });
-    });
-
     vc.on('gaze', ({ yaw, pitch, confidence }: { yaw: number; pitch: number; confidence: number[] | null }) => {
       ctx.report('gaze', { yaw, pitch, confidence: confidence ? Math.min(...confidence) : null });
     });
@@ -163,7 +154,6 @@ export function createVitalCameraAdapter(): SensorAdapter {
     });
 
     const activated: Capability[] = ['heartRate', 'bvp', 'beatIntervals', 'signalQuality', 'prv', 'headPose', 'faceDetection'];
-    if (emotionEnabled) activated.push('facialExpression');
     if (faceLandmarkerEnabled) {
       activated.push('eyeState', 'speaking');
       if (gazeEnabled) activated.push('gaze');

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { VisualMode, modeMeta } from '@/app/lib/designTokens';
+import { modeMeta } from '@/app/lib/designTokens';
+import type { VisualMode } from '@/app/lib/designTokens';
 import { AssessmentMode } from '@/app/lib/assessment/engine';
 
 interface IntentSelectProps {

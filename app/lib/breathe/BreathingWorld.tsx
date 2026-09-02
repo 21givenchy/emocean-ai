@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { WorldState } from './stateMachine';
+import type { WorldState } from './stateMachine';
 
 interface BreathingWorldProps {
   state: WorldState;

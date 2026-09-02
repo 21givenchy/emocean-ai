@@ -16,34 +16,36 @@ export default function HomePage() {
           <span className="font-semibold text-lg">EMOCEAN</span>
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm" style={{ color: '#A9BAB8' }}>
-          <Link href="/lab" className="hover:text-white transition-colors">Lab</Link>
+          <Link href="/lab/interface" className="hover:text-white transition-colors">Find my interface</Link>
+          <Link href="/lab/breathe" className="hover:text-white transition-colors">Breathe</Link>
           <Link href="/research" className="hover:text-white transition-colors">Research</Link>
           <Link href="/for-teams" className="hover:text-white transition-colors">For teams</Link>
-          <Link href="/sandbox" className="hover:text-white transition-colors">Developers</Link>
           <Link href="/about" className="hover:text-white transition-colors">About</Link>
         </div>
         <Link
-          href="/lab"
+          href="/lab/interface"
           className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
           style={{ backgroundColor: '#67E8D4', color: '#071318' }}
         >
-          Enter the lab
+          Find my interface
         </Link>
       </nav>
 
       <main className="max-w-6xl mx-auto px-6 py-16 md:py-24">
-        <div className="max-w-3xl mb-20">
+        {/* ── Hero ─────────────────────────────────────────────── */}
+        <div className="max-w-3xl mb-24">
           <p className="text-sm font-medium uppercase tracking-widest mb-4" style={{ color: '#67E8D4' }}>
             EMOCEAN · Bioadaptive Experience Lab
           </p>
           <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
-            Your interface can learn
+            Find the interface that helps you{' '}
             <span className="block" style={{ color: '#67E8D4' }}>
-              how you work best.
+              read and focus better.
             </span>
           </h1>
-          <p className="text-xl mb-8 max-w-xl" style={{ color: '#A9BAB8' }}>
-            Try two short, private experiments. Discover interface settings that support a real task—or use your breath to change a living digital world.
+          <p className="text-xl mb-8 max-w-2xl" style={{ color: '#A9BAB8' }}>
+            Complete a few short comparisons. Leave with typography, spacing and contrast settings
+            based on how you performed—not a personality label.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link
@@ -61,96 +63,148 @@ export default function HomePage() {
               className="inline-flex items-center gap-3 px-8 py-4 rounded-xl text-lg font-medium border transition-colors hover:bg-white/5"
               style={{ borderColor: 'rgba(245,247,242,.12)', color: '#F5F7F2' }}
             >
-              Breathe the world open
+              See the breathing world
             </Link>
           </div>
           <p className="mt-4 text-sm" style={{ color: '#A9BAB8' }}>
-            No account required · Camera optional · Processing stays on this device unless you explicitly join a study
+            No account. Camera optional. Results stay in this session unless you export them.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-20">
-          <Link href="/lab/interface" className="group p-8 rounded-2xl border transition-all hover:border-[#67E8D4]/30" style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}>
-            <div className="text-3xl mb-4">🎯</div>
-            <h3 className="text-xl font-semibold mb-2">Find My Interface</h3>
-            <p className="text-sm mb-4" style={{ color: '#A9BAB8' }}>
-              Compare typography, spacing, contrast, and motion while you read, search, and reply. Leave with a context-specific interface kit—not a personality label.
+        {/* ── Primary utility: Find My Interface ───────────────── */}
+        <div className="mb-24">
+          <div className="p-8 md:p-10 rounded-2xl border" style={{ backgroundColor: '#10242B', borderColor: 'rgba(103,232,212,.28)' }}>
+            <p className="text-xs font-medium uppercase tracking-widest mb-3" style={{ color: '#67E8D4' }}>
+              Start here
             </p>
-            <div className="flex items-center gap-4 text-xs" style={{ color: '#A9BAB8' }}>
+            <h2 className="text-3xl font-semibold mb-3">Find My Interface</h2>
+            <p className="text-lg mb-6 max-w-2xl" style={{ color: '#A9BAB8' }}>
+              Compare typography, spacing, contrast and motion while you read, search and reply. The
+              result is a set of settings for the task you came to do—exportable, and specific to
+              this session rather than to a type of person.
+            </p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm mb-8" style={{ color: '#A9BAB8' }}>
               <span>5–10 min</span>
               <span>·</span>
-              <span>Camera optional</span>
+              <span>No camera needed</span>
               <span>·</span>
               <span>Exportable settings</span>
-            </div>
-          </Link>
-
-          <Link href="/lab/breathe" className="group p-8 rounded-2xl border transition-all hover:border-[#7DD3B0]/30" style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}>
-            <div className="text-3xl mb-4">🌊</div>
-            <h3 className="text-xl font-semibold mb-2">Breathe the World Open</h3>
-            <p className="text-sm mb-4" style={{ color: '#A9BAB8' }}>
-              A stormed-over world responds as your breathing becomes slower and steadier. Restore light, calm the weather, and learn a regulation skill you can take with you.
-            </p>
-            <div className="flex items-center gap-4 text-xs" style={{ color: '#A9BAB8' }}>
-              <span>3–5 min</span>
               <span>·</span>
-              <span>Webcam or guided mode</span>
+              <span>&ldquo;No clear difference&rdquo; is a valid outcome</span>
             </div>
-          </Link>
-        </div>
 
-        <div className="mb-20">
-          <h2 className="text-2xl font-semibold mb-8">How it works</h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            {[
-              { step: '1', title: 'Choose a goal', desc: 'The same interface is not best for every task.' },
-              { step: '2', title: 'Complete short comparisons', desc: 'We measure task outcomes and ask what felt better.' },
-              { step: '3', title: 'Add signals if you want', desc: 'Physiology can provide context; it never overrules your result.' },
-              { step: '4', title: 'Take something useful', desc: 'Export a theme, a breathing summary, or a research-ready session file.' },
-            ].map((item) => (
-              <div key={item.step} className="p-6 rounded-xl" style={{ backgroundColor: '#10242B' }}>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mb-3" style={{ backgroundColor: '#67E8D4', color: '#071318' }}>
-                  {item.step}
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              {[
+                { step: '1', title: 'Choose a goal', desc: 'The same interface is not best for every task.' },
+                { step: '2', title: 'Complete short comparisons', desc: 'We measure task outcomes, and separately ask what felt better.' },
+                { step: '3', title: 'Take the settings with you', desc: 'Export the kit, or keep it for this session only.' },
+              ].map((item) => (
+                <div key={item.step}>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mb-3" style={{ backgroundColor: '#67E8D4', color: '#071318' }}>
+                    {item.step}
+                  </div>
+                  <h3 className="font-medium mb-1">{item.title}</h3>
+                  <p className="text-sm" style={{ color: '#A9BAB8' }}>{item.desc}</p>
                 </div>
-                <h3 className="font-medium mb-1">{item.title}</h3>
-                <p className="text-sm" style={{ color: '#A9BAB8' }}>{item.desc}</p>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            <Link
+              href="/lab/interface"
+              className="inline-flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-colors"
+              style={{ backgroundColor: '#67E8D4', color: '#071318' }}
+            >
+              Find my interface
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
           </div>
         </div>
 
-        <div className="mb-20 p-8 rounded-2xl border" style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}>
-          <h2 className="text-2xl font-semibold mb-4">Bioadaptive, not mind-reading.</h2>
-          <p style={{ color: '#A9BAB8' }}>
-            EMOCEAN estimates observable signals and task outcomes. It does not know your inner emotion, diagnose health, or claim one permanent &ldquo;best&rdquo; design. When signal quality is low, the experience pauses adaptation and tells you.
-          </p>
+        {/* ── Bridge to Breathe (secondary showcase) ───────────── */}
+        <div className="mb-24">
+          <div className="p-8 rounded-2xl border" style={{ borderColor: 'rgba(245,247,242,.12)' }}>
+            <div className="md:flex md:items-start md:justify-between md:gap-10">
+              <div className="max-w-2xl">
+                <p className="text-xs font-medium uppercase tracking-widest mb-3" style={{ color: '#7DD3B0' }}>
+                  Also in the lab
+                </p>
+                <h2 className="text-2xl font-semibold mb-3">Breathe the World Open</h2>
+                <p className="mb-4" style={{ color: '#A9BAB8' }}>
+                  Software can respond to more than clicks. In Breathe the World Open, a storm changes
+                  as you follow a breathing rhythm. Camera mode is an experimental demonstration of
+                  upper-body motion sensing.
+                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" style={{ color: '#A9BAB8' }}>
+                  <span>3–5 min</span>
+                  <span>·</span>
+                  <span>Guided mode works with no camera</span>
+                  <span>·</span>
+                  <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: '#F4B86A20', color: '#F4B86A' }}>
+                    Camera mode: experimental
+                  </span>
+                </div>
+              </div>
+              <Link
+                href="/lab/breathe"
+                className="mt-6 md:mt-1 inline-flex shrink-0 items-center gap-2 px-6 py-3 rounded-xl font-medium border transition-colors hover:bg-white/5"
+                style={{ borderColor: 'rgba(245,247,242,.2)', color: '#F5F7F2' }}
+              >
+                See the breathing world
+              </Link>
+            </div>
+          </div>
         </div>
 
-        <div className="mb-20">
+        {/* ── Brand promise ───────────────────────────────────── */}
+        <div className="mb-24 max-w-3xl">
+          <h2 className="text-2xl font-semibold mb-4">What EMOCEAN claims, and what it does not.</h2>
+          <p className="text-lg" style={{ color: '#A9BAB8' }}>
+            EMOCEAN explores how digital experiences can adapt to what you do and to signals you
+            choose to share. It measures observable behavior and signal quality. It does not claim to
+            know how you feel.
+          </p>
+          <Link href="/methods" className="inline-block mt-4 text-sm font-medium" style={{ color: '#67E8D4' }}>
+            Read the methods →
+          </Link>
+        </div>
+
+        {/* ── Research lineage ────────────────────────────────── */}
+        <div className="mb-24 max-w-3xl">
           <h2 className="text-2xl font-semibold mb-4">A decade of making digital worlds respond to the body.</h2>
           <p className="mb-4" style={{ color: '#A9BAB8' }}>
-            The team previously explored VR breath biofeedback and environments that became calmer as participants regained physiological control. EMOCEAN turns that lineage into open, testable web experiences.
+            The team previously explored VR breath biofeedback and environments that became calmer as
+            participants regained physiological control. EMOCEAN turns that lineage into open,
+            testable web experiences.
           </p>
           <Link href="/research" className="text-sm font-medium" style={{ color: '#67E8D4' }}>
             Explore the research →
           </Link>
         </div>
 
-        <div className="p-8 rounded-2xl border" style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}>
-          <h2 className="text-2xl font-semibold mb-4">Build the next responsive world with us.</h2>
-          <p className="mb-4" style={{ color: '#A9BAB8' }}>
-            We are developing validated building blocks for games, learning tools, focus products, and generated media. Partners can test adaptive mechanics before integrating them.
-          </p>
-          <Link href="/for-teams" className="text-sm font-medium" style={{ color: '#67E8D4' }}>
-            Talk to the lab →
-          </Link>
+        {/* ── Future layer: teams ────────────────────────────── */}
+        <div className="pt-8 border-t" style={{ borderColor: 'rgba(245,247,242,.12)' }}>
+          <div className="md:flex md:items-baseline md:justify-between md:gap-10">
+            <div className="max-w-2xl">
+              <h2 className="text-lg font-semibold mb-2">Working on adaptive interfaces?</h2>
+              <p className="text-sm" style={{ color: '#A9BAB8' }}>
+                We are exploring building blocks for teams building focus tools, learning
+                products and games. There is no published package yet—these experiences are how the
+                mechanics get tested first.
+              </p>
+            </div>
+            <Link href="/for-teams" className="inline-block mt-4 md:mt-0 text-sm font-medium shrink-0" style={{ color: '#67E8D4' }}>
+              Talk to the lab →
+            </Link>
+          </div>
         </div>
       </main>
 
       <footer className="border-t py-8" style={{ borderColor: 'rgba(245,247,242,.12)' }}>
-        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between text-sm" style={{ color: '#A9BAB8' }}>
+        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4 text-sm" style={{ color: '#A9BAB8' }}>
           <span>© EMOCEAN</span>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-6">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="/research" className="hover:text-white transition-colors">Research</Link>
             <Link href="/methods" className="hover:text-white transition-colors">Methods</Link>

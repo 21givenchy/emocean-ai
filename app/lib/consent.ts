@@ -12,7 +12,6 @@ export interface ConsentRecord {
   grantedAt: number;
   scope: 'assessment' | 'breathing' | 'both';
   participantId: string; // random, not linked to identity
-  withdrawnAt?: number;
 }
 
 export interface SessionExport {
@@ -74,11 +73,24 @@ export interface VitalsExport {
   timestamps: number[];
 }
 
+/**
+ * Metadata attached to an exported session.
+ *
+ * Deliberately coarse. Earlier versions recorded `navigator.userAgent`, exact
+ * screen resolution, IANA timezone and `navigator.language` — four fields that
+ * together fingerprint a browser, in a file the copy described as
+ * de-identified. Exports are the user's to share, so the honest default is to
+ * carry only what is needed to interpret the session.
+ *
+ * `viewport` is bucketed rather than exact because reading-task results depend
+ * on roughly how wide the column was, not on the pixel count.
+ */
 export interface SessionMetadata {
-  userAgent: string;
-  screenResolution: string;
-  timezone: string;
-  language: string;
+  /** Coarse viewport band at export time. */
+  viewport: 'narrow' | 'medium' | 'wide';
+  /** Relevant to interpreting motion and spacing results. */
+  prefersReducedMotion: boolean;
+  /** UTC. Carries no timezone offset. */
   timestamp: string;
   version: string;
 }
@@ -101,9 +113,7 @@ export function getConsent(): ConsentRecord | null {
   try {
     const stored = localStorage.getItem(CONSENT_KEY);
     if (!stored) return null;
-    const record: ConsentRecord = JSON.parse(stored);
-    if (record.withdrawnAt) return null;
-    return record;
+    return JSON.parse(stored) as ConsentRecord;
   } catch {
     return null;
   }
@@ -124,17 +134,16 @@ export function grantConsent(scope: 'assessment' | 'breathing' | 'both'): Consen
   return record;
 }
 
+/**
+ * Deletes the consent record outright.
+ *
+ * This product is local-only: no consent record, session or signal is uploaded,
+ * and no server holds a copy. So "withdrawal means deletion" can be honoured
+ * literally, by removing the record rather than tombstoning it with a
+ * tombstone marker and keeping the participant id on disk.
+ */
 export function withdrawConsent(): void {
-  const stored = localStorage.getItem(CONSENT_KEY);
-  if (!stored) return;
-
-  try {
-    const record: ConsentRecord = JSON.parse(stored);
-    record.withdrawnAt = Date.now();
-    localStorage.setItem(CONSENT_KEY, JSON.stringify(record));
-  } catch {
-    localStorage.removeItem(CONSENT_KEY);
-  }
+  localStorage.removeItem(CONSENT_KEY);
 }
 
 export function hasConsent(): boolean {
@@ -144,11 +153,10 @@ export function hasConsent(): boolean {
 // ── Session export ──────────────────────────────────────────────────
 
 function getMetadata(): SessionMetadata {
+  const w = window.innerWidth;
   return {
-    userAgent: navigator.userAgent,
-    screenResolution: `${window.screen.width}x${window.screen.height}`,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    language: navigator.language,
+    viewport: w < 640 ? 'narrow' : w < 1280 ? 'medium' : 'wide',
+    prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     timestamp: new Date().toISOString(),
     version: EXPORT_VERSION,
   };
@@ -248,45 +256,14 @@ export function downloadExport(data: SessionExport, filename?: string): void {
   URL.revokeObjectURL(url);
 }
 
-// ── Research telemetry (opt-in only) ────────────────────────────────
-
-const TELEMETRY_KEY = 'emocean-telemetry';
-const TELEMETRY_ENDPOINT = '/api/telemetry'; // placeholder
-
-export interface TelemetryEvent {
-  type: 'session_complete' | 'consent_granted' | 'consent_withdrawn' | 'export_downloaded';
-  participantId: string;
-  timestamp: number;
-  data: Record<string, unknown>;
-}
-
-export function isTelemetryEnabled(): boolean {
-  try {
-    return localStorage.getItem(TELEMETRY_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-export function setTelemetryEnabled(enabled: boolean): void {
-  localStorage.setItem(TELEMETRY_KEY, enabled ? 'true' : 'false');
-}
-
-export async function sendTelemetry(event: TelemetryEvent): Promise<void> {
-  if (!isTelemetryEnabled()) return;
-
-  try {
-    // In production, this would POST to the telemetry endpoint
-    // For now, log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Telemetry]', event);
-    }
-    // await fetch(TELEMETRY_ENDPOINT, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(event),
-    // });
-  } catch {
-    // Telemetry failures are silently ignored — never block the user
-  }
-}
+// ── Research telemetry ──────────────────────────────────────────────
+//
+// Intentionally absent. This build is local-only: there is no telemetry
+// endpoint, no upload path and no server that could receive a session.
+//
+// A previous version of this module defined `TELEMETRY_ENDPOINT = '/api/telemetry'`
+// with a commented-out `fetch`, plus enable/disable helpers. Nothing called the
+// upload, but its presence made the privacy copy read as though an opt-in
+// research pipeline existed. If a research backend is added later it needs
+// authenticated consent records, a data inventory, retention and deletion
+// paths, audit logging and a security review before any of this returns.

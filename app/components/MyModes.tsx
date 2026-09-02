@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { VisualMode, VisualTokens, modeMeta } from '@/app/lib/designTokens';
+import { modeMeta } from '@/app/lib/designTokens';
+import type { VisualMode, VisualTokens } from '@/app/lib/designTokens';
 
 interface SavedMode {
   id: string;

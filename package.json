@@ -1,17 +1,21 @@
 {
-  "name": "emotion-detector",
+  "name": "emocean-ai",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"tests/**/*.test.ts\"",
+    "check:claims": "node scripts/check-claims.mjs",
+    "verify": "npm run typecheck && npm run check:claims && npm run test && npm run lint",
+    "e2e": "echo \"e2e: no harness installed yet. Playwright is an approved-but-unstarted item (docs/ROADMAP.md PR-2/PR-3 acceptance). Failing loudly beats silently passing.\" && exit 1"
   },
   "dependencies": {
     "@litertjs/core": "0.2.1",
     "@mediapipe/tasks-vision": "0.10.21",
-    "face-api.js": "^0.22.2",
     "next": "16.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -27,5 +31,9 @@
     "eslint-config-next": "16.3.1",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "description": "Bioadaptive experience lab: a camera-free interface assessment and a breathing-responsive world.",
+  "engines": {
+    "node": ">=23.6"
   }
 }

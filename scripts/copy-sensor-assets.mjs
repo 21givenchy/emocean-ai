@@ -71,13 +71,19 @@ async function main() {
   // ── 1. vitalcamera-sdk model files -> public/models/vitalcamera/ ──
   const sdkModels = join(NODE_MODULES, 'vitalcamera-sdk', 'models');
   const modelsOut = join(PUBLIC, 'models', 'vitalcamera');
+  // The SDK also ships enet_b0_8_best_vgaf_dynamic_int8.tflite (facial-emotion
+  // classifier, 4.5 MB) and src/workers/emotion.worker.js. Both are
+  // deliberately NOT copied: expression inference is disabled in
+  // vitalCameraAdapter (`enableEmotion: false`) because there is no validated
+  // estimator behind it and the product promises no emotion inference. Serving
+  // the classifier as a public asset would contradict that promise even with
+  // no code path loading it. Do not re-add them.
   const modelFiles = [
     'model.tflite',                              // rppg
     'proj.tflite',                                // rppgProj
     'sqi_model.tflite',                           // sqi
     'psd_model.tflite',                           // psd
     'state.gz',                                   // state
-    'enet_b0_8_best_vgaf_dynamic_int8.tflite',    // emotion
     'mobileone_s0_gaze_float16.tflite',           // gaze
     'blaze_face_short_range.tflite',              // faceDetector
     'face_landmarker.task',                       // faceLandmarker
@@ -92,7 +98,6 @@ async function main() {
   const workerFiles = [
     'inference.worker.js',
     'psd.worker.js',
-    'emotion.worker.js',
     'gaze.worker.js',
     'plot.worker.js',
     'face_landmarker.worker.js',

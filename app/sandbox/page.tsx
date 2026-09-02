@@ -66,9 +66,9 @@ const hub = createDefaultSensorHub({
     if (snapshot.respiration.available) {
       console.log('Breath:', snapshot.respiration.value, 'bpm');
     }
-    // Facial expression
-    if (snapshot.facialExpression.available) {
-      console.log('Expression:', snapshot.facialExpression.value.label);
+    // Movement stability (observable motion, 0-1)
+    if (snapshot.movementStability.available) {
+      console.log('Stability:', snapshot.movementStability.value.score);
     }
   },
 });
@@ -84,7 +84,7 @@ const registry = {
   bvp: ['vitalcamera-sdk', 'green-channel-rppg'],
   prv: ['vitalcamera-sdk', 'green-channel-rppg'],
   respiration: ['chest-motion-respiration', 'respiration-derived'],
-  facialExpression: ['vitalcamera-sdk', 'mediapipe-fallback'],
+  movementStability: ['movement-stability-derived'],
   faceDetection: ['vitalcamera-sdk', 'mediapipe-fallback'],
   // ... more capabilities
 };`,

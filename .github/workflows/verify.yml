@@ -1,0 +1,75 @@
+name: verify
+
+# The repository's standing failure mode is copy and claims drifting ahead of
+# implementation. `npm run verify` is the gate that catches it; this workflow
+# makes the gate non-optional.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# No secrets are needed to verify, and none should be reachable from a PR.
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # The test runner imports .ts directly. Unflagged type-stripping
+          # landed in Node 23.6, so 22.x would fail `npm test`.
+          node-version: '24.x'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # Ordered cheapest-first so a claim violation fails in seconds rather
+      # than after a full lint pass.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Claim guard
+        run: npm run check:claims
+
+      - name: Tests
+        run: npm test
+
+      # 10 pre-existing errors remain in the Breathe and assessment modules
+      # (setState-in-effect cascades, an access-before-declaration in
+      # GuidedBreathing, `any` in the sensor adapters). They are scheduled with
+      # the P0 fixes for those modules — see docs/ROADMAP.md. Flip this to
+      # blocking once that lands; do not silence the rules to get there.
+      - name: Lint (non-blocking until P0 module fixes land)
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build
+        run: npm run build
+
+  # ── Deployment policy ─────────────────────────────────────────────────
+  #
+  # There is deliberately NO deploy job here.
+  #
+  # Production deploys are a human action taken from a reviewed, verified
+  # branch — never a side effect of a merge, and never initiated by a coding
+  # agent. Preview deploys are the only automated target, and they are owned by
+  # the Vercel Git integration rather than this workflow, so no deployment
+  # credential is ever exposed to CI.
+  #
+  # If a deploy job is added later it must: (1) target preview only,
+  # (2) require the `verify` job to pass, (3) require an environment with a
+  # human reviewer for anything production-facing.
+  deploy-policy:
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - name: Assert no production deploy is configured in CI
+        run: |
+          echo "Preview deploys: handled by the Vercel Git integration."
+          echo "Production deploys: manual, from a reviewed branch, by a human."
+          echo "Agent-initiated production deployment is prohibited."

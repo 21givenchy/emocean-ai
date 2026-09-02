@@ -32,7 +32,7 @@ export default function ForTeamsPage() {
           Build responsive worlds, together.
         </h1>
         <p className="text-lg mb-12 max-w-2xl" style={{ color: '#A9BAB8' }}>
-          We develop validated building blocks for adaptive interfaces: games that respond to your state, learning tools that pace themselves, focus products that know when to nudge.
+          We are developing building blocks for adaptive interfaces: games that respond to what a player does, learning tools that pace themselves, focus products that adapt to measured task performance. None of it is validated yet, and we will say so until it is.
         </p>
 
         <div className="grid md:grid-cols-2 gap-6 mb-16">
@@ -56,7 +56,7 @@ export default function ForTeamsPage() {
             </div>
             <h3 className="text-xl font-semibold mb-2">Research instruments</h3>
             <p className="text-sm" style={{ color: '#A9BAB8' }}>
-              Exportable session files with timestamps, signals, and self-report. Ready for IRB-approved studies.
+              Exportable session files with timestamps, signals, self-report and per-field provenance. What a study needs beyond that — protocol review, consent records, retention — is yours to run; we make no compliance claim.
             </p>
           </div>
 
@@ -106,7 +106,7 @@ export default function ForTeamsPage() {
               <span className="text-lg font-semibold" style={{ color: '#67E8D4' }}>03</span>
               <div>
                 <h4 className="font-medium text-white mb-1">Evaluation &amp; integration</h4>
-                <p className="text-sm">We review results together, document findings, and hand off production-ready code.</p>
+                <p className="text-sm">We review results together, document what the mechanic did and did not show, and hand off the prototype with its known limits written down.</p>
               </div>
             </div>
           </div>

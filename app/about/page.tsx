@@ -39,7 +39,7 @@ export default function AboutPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">The origin</h2>
             <p className="mb-3" style={{ color: '#A9BAB8' }}>
-              Our team previously built immersive VR environments that responded to participants' breathing—calming storms as breathing stabilized, brightening landscapes as heart-rate variability increased. The work demonstrated that bioadaptive mechanics can be both meaningful and measurable.
+              Our team previously built immersive VR environments that responded to participants&rsquo; breathing—calming storms as breathing stabilized, brightening landscapes as heart-rate variability increased. The work demonstrated that bioadaptive mechanics can be both meaningful and measurable.
             </p>
             <p style={{ color: '#A9BAB8' }}>
               EMOCEAN translates those insights into lightweight, browser-based experiences that anyone can try—no VR headset, no special hardware, no account required.
@@ -55,7 +55,7 @@ export default function AboutPage() {
               </div>
               <div className="flex items-start gap-3">
                 <span style={{ color: '#67E8D4' }}>·</span>
-                <span><strong className="text-white">Physiology provides context, not answers.</strong> Heart rate and breathing data can inform interface adaptation, but they cannot replace self-report. Your stated preference always takes priority.</span>
+                <span><strong className="text-white">Physiology provides context, not answers.</strong> Heart rate and breathing data can inform interface adaptation, but they never overrule the other two results. Measured task performance is the protected result; stated preference is reported alongside it, never merged into it. Where the two disagree, we show the disagreement.</span>
               </div>
               <div className="flex items-start gap-3">
                 <span style={{ color: '#67E8D4' }}>·</span>
@@ -92,7 +92,7 @@ export default function AboutPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">Open source</h2>
             <p style={{ color: '#A9BAB8' }}>
-              EMOCEAN's codebase is available on GitHub. We welcome contributions, bug reports, and research collaborations. If you are building adaptive experiences, we would love to hear from you.
+              EMOCEAN&rsquo;s codebase is available on GitHub. We welcome contributions, bug reports, and research collaborations. If you are building adaptive experiences, we would love to hear from you.
             </p>
           </section>
 

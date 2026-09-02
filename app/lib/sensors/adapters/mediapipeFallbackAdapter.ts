@@ -7,38 +7,6 @@ function blendScore(blend: Blend, names: string[]) {
   return matches.length ? Math.max(...matches) : 0;
 }
 
-function readExpressionScores(blend: Blend) {
-  const smile = blendScore(blend, ['mouthSmileLeft', 'mouthSmileRight']);
-  const frown = blendScore(blend, ['mouthFrownLeft', 'mouthFrownRight']);
-  const browDown = blendScore(blend, ['browDownLeft', 'browDownRight']);
-  const browUp = blendScore(blend, ['browInnerUp', 'browOuterUpLeft', 'browOuterUpRight']);
-  const jawOpen = blendScore(blend, ['jawOpen']);
-  const eyeWide = blendScore(blend, ['eyeWideLeft', 'eyeWideRight']);
-  const eyeSquint = blendScore(blend, ['eyeSquintLeft', 'eyeSquintRight']);
-  const mouthPress = blendScore(blend, ['mouthPressLeft', 'mouthPressRight']);
-  const cheekSquint = blendScore(blend, ['cheekSquintLeft', 'cheekSquintRight']);
-
-  const scores: Record<string, number> = {
-    joy: Math.max(0, smile * 0.8 + cheekSquint * 0.2),
-    surprise: Math.max(0, browUp * 0.55 + jawOpen * 0.25 + eyeWide * 0.2),
-    tense: Math.max(0, (browDown * 0.5 + mouthPress * 0.35 + frown * 0.15) * (1 - jawOpen * 0.5)),
-    curious: Math.max(0, browUp * 0.5 + eyeSquint * 0.3 + (1 - smile) * 0.1),
-    calm: 0.28,
-    sad: Math.max(0, frown * 0.5 + (1 - smile) * 0.3 + browUp * 0.2),
-    angry: Math.max(0, browDown * 0.6 + mouthPress * 0.3 + frown * 0.1),
-  };
-
-  let dominant = 'calm';
-  let best = scores.calm;
-  for (const [key, value] of Object.entries(scores)) {
-    if (key !== 'calm' && value > best && value > 0.22) {
-      best = value;
-      dominant = key;
-    }
-  }
-  return { scores, dominant };
-}
-
 /** Decode yaw/pitch/roll (degrees) from a MediaPipe 4x4 row-major facial transformation matrix. */
 function eulerFromMatrix(m: Float32Array): { yaw: number; pitch: number; roll: number } {
   // m is row-major 4x4; rotation submatrix occupies indices [0..2][0..2] at
@@ -78,7 +46,7 @@ const SPEAKING_STD_THRESHOLD = 0.04;
  */
 export function createMediapipeFallbackAdapter(): SensorAdapter {
   const id = 'mediapipe-fallback';
-  const capabilities: Capability[] = ['facialExpression', 'faceDetection', 'headPose', 'eyeState', 'speaking'];
+  const capabilities: Capability[] = ['faceDetection', 'headPose', 'eyeState', 'speaking'];
 
   let landmarker: any = null;
   let rafId: number | null = null;
@@ -124,7 +92,6 @@ export function createMediapipeFallbackAdapter(): SensorAdapter {
 
         if (!found) {
           ctxRef.report('faceDetection', null, { available: false, reason: 'no face detected' });
-          ctxRef.report('facialExpression', null, { available: false, reason: 'no face detected' });
           ctxRef.report('eyeState', null, { available: false, reason: 'no face detected' });
           ctxRef.report('speaking', null, { available: false, reason: 'no face detected' });
           jawOpenBuf.length = 0;
@@ -142,9 +109,6 @@ export function createMediapipeFallbackAdapter(): SensorAdapter {
             if (py > yMax) yMax = py;
           }
           ctxRef.report('faceDetection', { box: { x: xMin, y: yMin, w: xMax - xMin, h: yMax - yMin } });
-
-          const { scores, dominant } = readExpressionScores(blend);
-          ctxRef.report('facialExpression', { label: dominant, scores });
 
           const eyeBlinkL = blendScore(blend, ['eyeBlinkLeft']);
           const eyeBlinkR = blendScore(blend, ['eyeBlinkRight']);

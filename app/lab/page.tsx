@@ -66,15 +66,6 @@ export default function LabPage() {
             </div>
           </Link>
 
-          <Link href="/lab/sensors" className="block p-6 rounded-2xl border transition-all hover:border-[#F4B86A]/30" style={{ backgroundColor: '#10242B', borderColor: 'rgba(245,247,242,.12)' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold mb-1">Sensor Diagnostics</h3>
-                <p className="text-sm" style={{ color: '#A9BAB8' }}>Experimental · Developer tools</p>
-              </div>
-              <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: '#F4B86A20', color: '#F4B86A' }}>Experimental</span>
-            </div>
-          </Link>
         </div>
       </main>
     </div>

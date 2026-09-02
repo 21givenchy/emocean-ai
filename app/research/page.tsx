@@ -45,7 +45,7 @@ export default function ResearchPage() {
               <strong className="text-white">What we can claim:</strong> Respiratory entrainment is a well-documented phenomenon (Lehrer &amp; Gevirtz, 2014). Guided paced breathing, where the pacing comes from the interface rather than from a sensor, rests on that published work.
             </p>
             <p style={{ color: '#A9BAB8' }}>
-              <strong className="text-white">What we cannot claim:</strong> That our webcam-derived breathing estimate is accurate. We have not compared it against a reference instrument, so we do not know its error — see <Link href="/validation" className="underline" style={{ color: '#67E8D4' }}>Validation</Link>. We also cannot claim it approaches medical-grade plethysmography, or that short sessions produce lasting clinical outcomes.
+              <strong className="text-white">What we cannot claim:</strong> That our webcam-derived breathing estimate is accurate. We have not compared it against a reference instrument, so we do not know its error — see <Link href="/validation" className="underline" style={{ color: '#67E8D4' }}>Validation</Link>. We also cannot claim it approaches medical-grade plethysmography, or that short sessions produce lasting clinical outcomes. {/* claim-ok:negated-disclaimer */}
             </p>
           </section>
 

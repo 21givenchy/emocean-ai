@@ -54,7 +54,6 @@ export function createSimulationAdapter(options: { allowSimulation: boolean }): 
     ctx.report('signalQuality', 0.9);
     ctx.report('prv', { rmssd: 35, sdnn: 45, meanRR: 60000 / hr, n: 20 });
     ctx.report('respiration', 14, { derived: true });
-    ctx.report('facialExpression', { label: 'calm', scores: { calm: 0.6, joy: 0.2 } });
     ctx.report('faceDetection', { box: { x: 100, y: 80, w: 200, h: 220 } });
     ctx.report('headPose', { yaw: Math.sin(t * 0.1) * 5, pitch: 0, roll: 0 });
     ctx.report('eyeState', { left: { prob: 0.95, open: true }, right: { prob: 0.95, open: true }, bothClosed: false });

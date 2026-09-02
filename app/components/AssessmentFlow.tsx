@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { VisualMode, VisualTokens, defaultTokens, modeMeta } from '@/app/lib/designTokens';
+import { defaultTokens, modeMeta } from '@/app/lib/designTokens';
+import type { VisualMode, VisualTokens } from '@/app/lib/designTokens';
 import {
   AssessmentMode,
   Protocol,

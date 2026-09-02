@@ -1,4 +1,4 @@
-import { VisualTokens, defaultTokens, VisualMode } from '../designTokens';
+import type { VisualTokens } from '../designTokens';
 
 // ── Factor definitions ──────────────────────────────────────────────
 
